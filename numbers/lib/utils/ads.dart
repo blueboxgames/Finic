@@ -7,38 +7,38 @@ import 'package:flutter/material.dart';
 import 'package:gameanalytics_sdk/gameanalytics.dart';
 import 'package:numbers/utils/analytic.dart';
 import 'package:numbers/utils/prefs.dart';
-import 'package:unity_ads_plugin/unity_ads.dart';
+// import 'package:unity_ads_plugin/unity_ads.dart';
 
 class Ads {
   static LinkedHashSet<String> _placementIds = new LinkedHashSet();
 
   static Function? onAdsReady;
-  static UnityAdState? _lastAdState;
+  // static UnityAdState? _lastAdState;
 
   static String platform = "Android";
   static init() async {
     debugPrint("Ads init =====> ${DateTime.now().millisecondsSinceEpoch}");
-    UnityAds.init(
-        gameId: "4230791",
-        listener: (UnityAdState state, data) {
-          AdPlace place = _getPlacement(data['placementId']);
-          if (state == UnityAdState.ready) {
-            Analytics.ad(GAAdAction.Loaded, place.type, place.name);
-            _placementIds.add(data['placementId']);
-            onAdsReady?.call();
-          } else if (state == UnityAdState.complete ||
-              state == UnityAdState.skipped) {
-            Analytics.ad(GAAdAction.RewardReceived, place.type, place.name);
-            _lastAdState = state;
-          }
-          debugPrint(
-              "Ads state =====> $state : $data ${DateTime.now().millisecondsSinceEpoch}");
-        });
+    // UnityAds.init(
+    //     gameId: "4230791",
+    //     listener: (UnityAdState state, data) {
+    //       AdPlace place = _getPlacement(data['placementId']);
+    //       if (state == UnityAdState.ready) {
+    //         Analytics.ad(GAAdAction.Loaded, place.type, place.name);
+    //         _placementIds.add(data['placementId']);
+    //         onAdsReady?.call();
+    //       } else if (state == UnityAdState.complete ||
+    //           state == UnityAdState.skipped) {
+    //         Analytics.ad(GAAdAction.RewardReceived, place.type, place.name);
+    //         _lastAdState = state;
+    //       }
+    //       debugPrint(
+    //           "Ads state =====> $state : $data ${DateTime.now().millisecondsSinceEpoch}");
+    //     });
 
-    for (var id in [AdPlace.Rewarded]) {
-      var ready = await UnityAds.isReady(placementId: id.name);
-      if (ready ?? false) _placementIds.add(id.name);
-    }
+    // for (var id in [AdPlace.Rewarded]) {
+    //   var ready = await UnityAds.isReady(placementId: id.name);
+    //   if (ready ?? false) _placementIds.add(id.name);
+    // }
   }
 
   static bool isReady([AdPlace? id]) =>
@@ -55,15 +55,15 @@ class Ads {
     }
     Analytics.ad(GAAdAction.Show, placement.type,
         placement.name); // where is this from?????
-    _lastAdState = UnityAdState.started;
-    _placementIds.remove(placement.name);
-    UnityAds.showVideoAd(placementId: placement.name);
-    const d = Duration(milliseconds: 500);
-    while (_lastAdState == UnityAdState.started) await Future.delayed(d);
-    return _lastAdState == UnityAdState.complete;
+    // _lastAdState = UnityAdState.started;
+    // _placementIds.remove(placement.name);
+    // UnityAds.showVideoAd(placementId: placement.name);
+    // const d = Duration(milliseconds: 500);
+    // while (_lastAdState == UnityAdState.started) await Future.delayed(d);
+    return false; //_lastAdState == UnityAdState.complete;
   }
 
-  static AdPlace _getPlacement(String id) {
+  /* static AdPlace _getPlacement(String id) {
     switch (id) {
       case "Interstitial_Android":
       case "Interstitial_iOS":
@@ -74,7 +74,7 @@ class Ads {
       default:
         return AdPlace.Rewarded;
     }
-  }
+  } */
 }
 
 enum AdPlace { Rewarded, Interstitial, Banner }

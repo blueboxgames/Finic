@@ -17,7 +17,6 @@ import 'package:numbers/utils/utils.dart';
 import 'package:numbers/utils/prefs.dart';
 import 'package:numbers/utils/sounds.dart';
 import 'package:numbers/utils/themes.dart';
-import 'package:numbers/utils/gemeservice.dart';
 
 enum GameEvent {
   big,
@@ -77,7 +76,7 @@ class MyGame extends BaseGame with TapDetector {
     var _new = Prefs.score += Cell.getScore(value);
     onGameEvent?.call(GameEvent.score, _new);
     if (Pref.record.value >= Prefs.score) return;
-    PlayGames.submitScoreById("CgkIw9yXzt4XEAIQAQ", Prefs.score);
+    // PlayGames.submitScoreById("CgkIw9yXzt4XEAIQAQ", Prefs.score);
     Pref.record.set(Prefs.score);
     _newRecord = Prefs.score;
   }

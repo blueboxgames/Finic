@@ -5,7 +5,6 @@ import 'package:firebase_analytics/observer.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:numbers/utils/ads.dart';
 import 'package:numbers/utils/analytic.dart';
 import 'package:numbers/utils/localization.dart';
@@ -87,7 +86,6 @@ class _MainPageState extends State<MainPage> {
         _loadingState = 1;
         setState(() {});
       });
-      InAppPurchaseAndroidPlatformAddition.enablePendingPurchases();
 
       var appsflyerSdk = AppsflyerSdk({
         "afDevKey": "YBThmUqaiHZYpiSwZ3GQz4",

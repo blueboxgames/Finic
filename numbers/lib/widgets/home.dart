@@ -7,10 +7,8 @@ import 'package:numbers/core/cells.dart';
 import 'package:numbers/core/game.dart';
 import 'package:numbers/overlays/all.dart';
 import 'package:numbers/overlays/pause.dart';
-import 'package:numbers/overlays/shop.dart';
 import 'package:numbers/overlays/stats.dart';
 import 'package:numbers/utils/analytic.dart';
-import 'package:numbers/utils/gemeservice.dart';
 import 'package:numbers/utils/localization.dart';
 import 'package:numbers/utils/prefs.dart';
 import 'package:numbers/utils/sounds.dart';
@@ -63,7 +61,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               child: Components.scores(theme, onTap: () {
                 _pause("record");
                 Analytics.design('guiClick:record:home');
-                PlayGames.showLeaderboard("CgkIw9yXzt4XEAIQAQ");
+                // PlayGames.showLeaderboard("CgkIw9yXzt4XEAIQAQ");
               })),
           Positioned(
               top: _game!.bounds.top - 45.d,
@@ -87,12 +85,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               top: _game!.bounds.top - 70.d,
               left: 73.d,
               height: 52.d,
-              child: Components.coins(context, "home", onTap: () async {
-                MyGame.isPlaying = false;
-                await Rout.push(context, ShopOverlay());
-                MyGame.isPlaying = true;
-                setState(() {});
-              })),
+              child: Components.coins(context, "home")),
           Pref.tutorMode.value == 0
               ? Positioned(
                   top: _game!.bounds.top - 68.d,

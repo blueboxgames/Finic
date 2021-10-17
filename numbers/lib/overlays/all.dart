@@ -5,11 +5,9 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:numbers/core/cell.dart';
-import 'package:numbers/overlays/shop.dart';
 import 'package:numbers/overlays/stats.dart';
 import 'package:numbers/utils/ads.dart';
 import 'package:numbers/utils/analytic.dart';
-import 'package:numbers/utils/gemeservice.dart';
 import 'package:numbers/utils/localization.dart';
 import 'package:numbers/utils/prefs.dart';
 import 'package:numbers/utils/sounds.dart';
@@ -56,7 +54,7 @@ class Overlays {
                   right: 10.d,
                   child: Components.scores(theme, onTap: () {
                     Analytics.design('guiClick:record:$tag');
-                    PlayGames.showLeaderboard("CgkIw9yXzt4XEAIQAQ");
+                    // PlayGames.showLeaderboard("CgkIw9yXzt4XEAIQAQ");
                   })),
           statsButton ??
               Positioned(
@@ -105,7 +103,7 @@ class Overlays {
 
   static revive(BuildContext context, int numRevive) {
     var theme = Theme.of(context);
-    var cost = 100 * pow(2, numRevive).round();
+    var cost = 200 * pow(2, numRevive).round();
     return basic(context, "revive",
         sfx: "lose",
         title: Device.aspectRatio < 0.7 ? "revive_l".l() : null,
@@ -390,7 +388,7 @@ class Overlays {
 
   static callout(BuildContext context, String title, String type,
       {EdgeInsets? padding, bool hasCoinButton = true}) {
-    var cost = 100;
+    var cost = 200;
     Sound.play("pop");
     var theme = Theme.of(context);
     return Stack(children: [
@@ -539,7 +537,8 @@ class Overlays {
   static _buttonsClick(BuildContext context, String type, int coin,
       {AdPlace? adId}) async {
     if (coin < 0 && Pref.coin.value < -coin) {
-      Rout.push(context, ShopOverlay());
+      Rout.push(context,
+          Overlays.message(context, "coin_notenough".l(), icon: "coin"));
       return;
     }
     if (adId != null) {

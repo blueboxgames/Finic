@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:numbers/core/cell.dart';
 import 'package:numbers/core/game.dart';
-import 'package:numbers/overlays/rating.dart';
 import 'package:numbers/utils/ads.dart';
 import 'package:numbers/utils/localization.dart';
 import 'package:numbers/utils/prefs.dart';
@@ -69,9 +68,7 @@ class _StartOverlayState extends State<StartOverlay> {
   }
 
   _onStart() async {
-    var shown = await RateOverlay.showRating(context);
-    if (!shown && Pref.playCount.value > 7)
-      await Ads.show(AdPlace.Interstitial);
+    if (Pref.playCount.value > 7) await Ads.show(AdPlace.Interstitial);
     await Rout.push(context, HomePage());
     Cell.maxRandomValue = 3;
     MyGame.boostNextMode = 0;

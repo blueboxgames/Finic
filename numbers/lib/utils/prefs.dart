@@ -1,10 +1,7 @@
 import 'dart:async';
-import 'dart:convert';
 
-import 'package:flutter/cupertino.dart';
 import 'package:gameanalytics_sdk/gameanalytics.dart';
 import 'package:numbers/utils/analytic.dart';
-import 'package:numbers/utils/gemeservice.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Prefs {
@@ -49,50 +46,50 @@ class Prefs {
   static Future<void> _restore() async {
     await _initPlayService();
     try {
-      var save = await PlayGames.openSnapshot('prefs');
-      if (save.content == null || save.content!.isEmpty)
-        return; // default value when there is no save
-      // var content =
-      //     '{"playCount":32,"big_14":1,"removeColor":3,"big_11":1,"big_10":1,"big_13":1,"big_12":1,"visitCount":17,"record":148284,"rate":3,"rateTarget":35,"noAds":0,"big_9":2,"coin":2404,"tutorMode":1,"ratedBefore":0,"removeOne":3,"isMute":1,"isVibrateOff":1}';
-      debugPrint("o ${save.content!}");
-      var data = json.decode(save.content!);
-      for (var entry in data.entries) _instance!.setInt(entry.key, entry.value);
+      // var save = await PlayGames.openSnapshot('prefs');
+      // if (save.content == null || save.content!.isEmpty)
+      //   return; // default value when there is no save
+      // // var content =
+      // //     '{"playCount":32,"big_14":1,"removeColor":3,"big_11":1,"big_10":1,"big_13":1,"big_12":1,"visitCount":17,"record":148284,"rate":3,"rateTarget":35,"noAds":0,"big_9":2,"coin":2404,"tutorMode":1,"ratedBefore":0,"removeOne":3,"isMute":1,"isVibrateOff":1}';
+      // debugPrint("o ${save.content!}");
+      // var data = json.decode(save.content!);
+      // for (var entry in data.entries) _instance!.setInt(entry.key, entry.value);
       allowsBackup = true;
     } catch (e) {
       print(e.toString());
     }
   }
 
-  static Timer? _wakeupTimer;
+  // static Timer? _wakeupTimer;
   static _backup() async {
-    _wakeupTimer?.cancel();
-    if (!allowsBackup) return;
-    _wakeupTimer = Timer(Duration(seconds: 5), () async {
-      try {
-        var keys = _instance!.getKeys();
-        var data = Map<String, int>();
-        for (var key in keys) {
-          var value = _instance!.getInt(key) ?? -1;
-          if (value > -1) data[key] = value;
-        }
-        var saveData = json.encode(data);
-        debugPrint("s $saveData");
-        await PlayGames.saveSnapshot('prefs', saveData);
-        PlayGames.openSnapshot('prefs');
-      } catch (e) {
-        debugPrint(e.toString());
-      }
-    });
+    // _wakeupTimer?.cancel();
+    // if (!allowsBackup) return;
+    // _wakeupTimer = Timer(Duration(seconds: 5), () async {
+    //   try {
+    //     var keys = _instance!.getKeys();
+    //     var data = Map<String, int>();
+    //     for (var key in keys) {
+    //       var value = _instance!.getInt(key) ?? -1;
+    //       if (value > -1) data[key] = value;
+    //     }
+    //     var saveData = json.encode(data);
+    //     debugPrint("s $saveData");
+    //     await PlayGames.saveSnapshot('prefs', saveData);
+    //     PlayGames.openSnapshot('prefs');
+    //   } catch (e) {
+    //     debugPrint(e.toString());
+    //   }
+    // });
   }
 
   static _initPlayService() async {
-    SigninResult result = await PlayGames.signIn(scopeSnapshot: true);
-    if (result.success) {
-      // await PlayGames.setPopupOptions();
-      debugPrint("${result.account!.displayName} ${result.account!.email}");
-    } else {
-      debugPrint(result.message);
-    }
+    // SigninResult result = await PlayGames.signIn(scopeSnapshot: true);
+    // if (result.success) {
+    //   // await PlayGames.setPopupOptions();
+    //   debugPrint("${result.account!.displayName} ${result.account!.email}");
+    // } else {
+    //   debugPrint(result.message);
+    // }
   }
 }
 

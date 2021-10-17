@@ -5,7 +5,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:numbers/core/game.dart';
 import 'package:numbers/overlays/all.dart';
-import 'package:numbers/overlays/shop.dart';
 import 'package:numbers/utils/ads.dart';
 import 'package:numbers/utils/analytic.dart';
 import 'package:numbers/utils/localization.dart';
@@ -47,7 +46,7 @@ class Components {
   }
 
   static Widget coins(BuildContext context, String source,
-      {Function()? onTap, bool clickable = true}) {
+      {Function()? onTap, bool clickable = false}) {
     if (Pref.tutorMode.value == 0) return SizedBox();
     var theme = Theme.of(context);
     var text = "${Pref.coin.value.format()}";
@@ -70,10 +69,9 @@ class Components {
             onTap: () {
               if (clickable) {
                 Analytics.design('guiClick:shop:$source');
-                if (onTap != null)
-                  onTap();
-                else
-                  Rout.push(context, ShopOverlay());
+                if (onTap != null) onTap();
+                // else
+                //   Rout.push(context, ShopOverlay());
               }
             }));
   }
@@ -135,7 +133,8 @@ class Components {
       context, String boost, int cost, Function? onSelect) async {
     if (cost > 0) {
       if (Pref.coin.value < cost) {
-        Rout.push(context, ShopOverlay());
+        Rout.push(context,
+            Overlays.message(context, "coin_notenough".l(), icon: "coin"));
         return;
       }
     } else {
