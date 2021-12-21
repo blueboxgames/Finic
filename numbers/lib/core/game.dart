@@ -4,40 +4,44 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/game.dart';
-import 'package:flame/gestures.dart';
+import 'package:flame/input.dart';
 import 'package:flame/palette.dart';
 import 'package:flame_svg/svg.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:numbers/animations/animate.dart';
 import 'package:numbers/core/achieves.dart';
 import 'package:numbers/core/cell.dart';
 import 'package:numbers/core/cells.dart';
 import 'package:numbers/utils/analytic.dart';
-import 'package:numbers/utils/utils.dart';
 import 'package:numbers/utils/prefs.dart';
 import 'package:numbers/utils/sounds.dart';
 import 'package:numbers/utils/themes.dart';
+import 'package:numbers/utils/utils.dart';
 
 enum GameEvent {
   big,
+  bigReward,
   boost,
   celebrate,
-  openPiggy,
   completeTutorial,
+  freeCoins,
   lose,
+  recordReward,
   remove,
   reward,
   rewarded,
+  piggyReward,
   score
 }
 
-class MyGame extends BaseGame with TapDetector {
+class MyGame extends FlameGame with TapDetector {
   static final Random random = new Random();
   static int boostNextMode = 0;
   static bool boostBig = false;
   static bool isPlaying = false;
+  static Rect bounds = Rect.fromLTRB(0, 0, 0, 0);
 
-  Rect bounds = Rect.fromLTRB(0, 0, 0, 0);
   Function(GameEvent, int)? onGameEvent;
   int numRevives = 0;
   String? removingMode;
@@ -63,11 +67,11 @@ class MyGame extends BaseGame with TapDetector {
   FallingEffect? _fallingEffect;
   ColumnHint? _columnHint;
 
-  MyGame({bounds, onGameEvent}) : super() {
+  MyGame({onGameEvent}) : super() {
     Prefs.score = 0;
-    this.bounds = bounds;
     this.onGameEvent = onGameEvent;
   }
+
   @override
   Color backgroundColor() => TColors.black.value[0];
 
@@ -76,14 +80,13 @@ class MyGame extends BaseGame with TapDetector {
     var _new = Prefs.score += Cell.getScore(value);
     onGameEvent?.call(GameEvent.score, _new);
     if (Pref.record.value >= Prefs.score) return;
-    // PlayGames.submitScoreById("CgkIw9yXzt4XEAIQAQ", Prefs.score);
     Pref.record.set(Prefs.score);
     _newRecord = Prefs.score;
   }
 
   @override
-  void onAttach() async {
-    super.onAttach();
+  Future<void> onLoad() async {
+    await super.onLoad();
 
     _tutorMode = Pref.tutorMode.value == 0;
     Pref.playCount.increase(1);
@@ -114,7 +117,7 @@ class MyGame extends BaseGame with TapDetector {
     _nextCell.init(Cell.getNextColumn(_fallingsCount), 0,
         Cell.getNextValue(_fallingsCount),
         hiddenMode: boostNextMode + 1);
-    _nextCell.x = _nextCell.column * Cell.diameter + Cell.radius + bounds.left;
+    _nextCell.x = Cell.getX(_nextCell.column);
     _nextCell.y = bounds.top + Cell.radius;
     add(_nextCell);
 
@@ -147,8 +150,8 @@ class MyGame extends BaseGame with TapDetector {
     while (_cells.getMatchs(column, row, value).length > 0)
       value = Cell.getNextValue(0);
     var cell = Cell(column, row, value);
-    cell.x = bounds.left + column * Cell.diameter + Cell.radius;
-    cell.y = bounds.top + Cell.diameter * (Cells.height - row) + Cell.radius;
+    cell.x = Cell.getX(column);
+    cell.y = Cell.getY(row);
     cell.state = CellState.Fixed;
     _cells.map[column][row] = cell;
     add(cell);
@@ -188,15 +191,17 @@ class MyGame extends BaseGame with TapDetector {
     if (_reward > 0) _numRewardCells++;
     var cell = Cell(_nextCell.column, row, _nextCell.value, reward: _reward);
     _reward = 0;
-    cell.x = bounds.left + cell.column * Cell.diameter + Cell.radius;
+    cell.x = Cell.getX(cell.column);
     cell.y = _nextCell.y + Cell.diameter - 20;
     _cells.map[cell.column][row] = _cells.last = cell;
     _cells.target =
         bounds.top + Cell.diameter * (Cells.height - row) + Cell.radius;
     add(cell);
-    if (!_tutorMode)
-      _nextCell.init(_nextCell.column, 0, Cell.getNextValue(_fallingsCount),
+    if (!_tutorMode) {
+      var seed = _tutorMode ? _fallingsCount : _cells.getMinValue();
+      _nextCell.init(_nextCell.column, 0, Cell.getNextValue(seed),
           hiddenMode: boostNextMode + 1);
+    }
     _speed = Cell.minSpeed;
   }
 
@@ -209,8 +214,7 @@ class MyGame extends BaseGame with TapDetector {
     if (_tutorMode && _cells.last!.y > bounds.top + Cell.diameter * 1.54) {
       isPlaying = false;
       var c = Cell.getNextColumn(_fallingsCount);
-      _columnHint!.show(
-          bounds.left + c * Cell.diameter + Cell.radius, c - _nextCell.column);
+      _columnHint!.show(Cell.getX(c), c - _nextCell.column);
     }
 
     // Check reach to target
@@ -266,19 +270,17 @@ class MyGame extends BaseGame with TapDetector {
       }
       var row = _cells.length(col);
       if (_cells.last! == _cells.get(col, row - 1)) --row;
-      var _y = bounds.top + Cell.diameter * (Cells.height - row) + Cell.radius;
+      var _y = Cell.getY(row);
       if (_cells.last!.y > _y) {
         debugPrint("col:$col  ${_cells.last!.y}  >>> $_y");
         return;
       }
-      var _x = bounds.left + col * Cell.diameter + Cell.radius;
+      var _x = Cell.getX(col);
       // Change column
       if (_nextCell.column != col) {
         _nextCell.column = col;
-        _nextCell.addEffect(MoveEffect(
-            duration: 0.3,
-            path: [Vector2(_x, _nextCell.y)],
-            curve: Curves.easeInOutQuad));
+        _nextCell.add(MoveEffect.to(Vector2(_x, _nextCell.y),
+            EffectController(duration: 0.3, curve: Curves.easeInOutQuad)));
 
         _cells.translate(_cells.last!, col, row);
         _cells.last!.x = _x;
@@ -304,22 +306,20 @@ class MyGame extends BaseGame with TapDetector {
     var time = 0.1;
     _cells.loop((i, j, c) {
       c.state = CellState.Falling;
-      var dy =
-          bounds.top + Cell.diameter * (Cells.height - c.row) + Cell.radius;
-      var coef = ((dy - c.y) / (Cell.diameter * Cells.height)) * 0.2;
+      var dy = Cell.getY(c.row);
+      var coef = ((dy - c.y) / (Cell.diameter * Cells.height)) * 0.4;
       var hasDistance = dy - c.y > 0;
-      var s1 = CombinedEffect(effects: [
-        MoveEffect(
-            path: [Vector2(c.x, dy + Cell.radius * coef)], duration: time),
-        ScaleEffect(size: Vector2(1, 1 - coef), duration: time)
-      ]);
-      var s2 = CombinedEffect(effects: [
-        MoveEffect(path: [Vector2(c.x, dy)], duration: time),
-        ScaleEffect(size: Vector2(1, 1), duration: time)
-      ]);
-      c.addEffect(SequenceEffect(
-          effects: [s1, s2],
-          onComplete: () => fallingComplete(c, dy, hasDistance)));
+
+      var c1 = EffectController(duration: time);
+      c.add(MoveEffect.to(Vector2(c.x, dy + Cell.radius * coef), c1));
+      c.add(SizeEffect.to(Vector2(1, 1 - coef), c1));
+
+      var c2 = DelayedEffectController(EffectController(duration: time * 2),
+          delay: time);
+      c.add(MoveEffect.to(Vector2(c.x, dy), c2));
+      c.add(SizeEffect.to(Vector2(1, 1), c2));
+
+      Animate.checkCompletion(c2, () => fallingComplete(c, dy, hasDistance));
     }, state: CellState.Float, startFrom: _lastFallingColumn);
   }
 
@@ -372,8 +372,9 @@ class MyGame extends BaseGame with TapDetector {
       for (var m in matchs) {
         _cells.accumulateColumn(m.column, m.row);
         _collectReward(m);
-        m.addEffect(MoveEffect(
-            duration: 0.1, path: [c.position], onComplete: () => remove(m)));
+        var controller = EffectController(duration: 0.1);
+        m.add(MoveEffect.to(c.position, controller));
+        Animate.checkCompletion(controller, () => remove(m));
       }
 
       if (matchs.length > 0) {
@@ -409,10 +410,9 @@ class MyGame extends BaseGame with TapDetector {
     }
 
     // More chance for spawm new cells
-    if (Cell.maxRandomValue < 7) {
-      var distance = (1.5 * sqrt(Cell.maxRandomValue)).ceil();
-      if (Cell.maxRandomValue < cell.value - distance)
-        Cell.maxRandomValue = cell.value - distance;
+    var index = cell.value - (Cell.maxRandomValue * 0.7).ceil();
+    if (index > -1 && index < Cell.lastRandomValue) {
+      Cell.maxRandomValue = index.min(Cell.maxRandomValue);
     }
 
     _fallAll();
@@ -453,18 +453,16 @@ class MyGame extends BaseGame with TapDetector {
   void showReward(int value, Vector2 destination, GameEvent event) {
     Sound.play("coin");
     var r = Reward(value, size.x * 0.5, size.y * 0.6);
-    var start = ScaleEffect(
-        size: Vector2(1, 1), duration: 0.3, curve: Curves.easeOutBack);
-    var end = CombinedEffect(effects: [
-      MoveEffect(path: [destination], duration: 0.3),
-      ScaleEffect(size: Vector2(0.3, 0.3), duration: 0.3)
-    ]);
-    r.addEffect(SequenceEffect(
-        effects: [start, ScaleEffect(size: Vector2(1, 1), duration: 0.3), end],
-        onComplete: () {
-          remove(r);
-          onGameEvent?.call(event, value);
-        }));
+    var start = EffectController(duration: 0.3, curve: Curves.easeOutBack);
+    r.add(SizeEffect.to(Vector2(1, 1), start));
+    var end = EffectController(duration: 0.3, curve: Curves.easeInExpo);
+    var delay = DelayedEffectController(end, delay: 1);
+    r.add(MoveEffect.to(destination, delay));
+    r.add(SizeEffect.to(Vector2(0.3, 0.3), delay));
+    Animate.checkCompletion(delay, () {
+      remove(r);
+      onGameEvent?.call(event, value);
+    });
     add(r);
   }
 
@@ -473,7 +471,7 @@ class MyGame extends BaseGame with TapDetector {
     if (_mergesCount < limit) return;
     _reward = _numRewardCells > 0 || _tutorMode
         ? 0
-        : random.nextInt(3) + _mergesCount * 2;
+        : random.nextInt(3) + _mergesCount * 3;
     var sprite = await Sprite.load(
         'celebration-${(_mergesCount - limit).clamp(0, 3)}.png');
     var celebration = SpriteComponent(
@@ -482,18 +480,15 @@ class MyGame extends BaseGame with TapDetector {
         sprite: sprite);
     celebration.anchor = Anchor.center;
     var _size = Vector2(bounds.width, bounds.width * 0.2);
-    var start =
-        ScaleEffect(size: _size, duration: 0.3, curve: Curves.easeInExpo);
-    var idle1 = ScaleEffect(
-        size: _size * 1.05, duration: 0.4, curve: Curves.easeOutExpo);
-    var idle2 = ScaleEffect(size: _size * 1.0, duration: 0.6);
-    var end = ScaleEffect(
-        size: Vector2(_size.x, 0), duration: 0.2, curve: Curves.easeInBack);
-    celebration.addEffect(SequenceEffect(
-        effects: [start, idle1, idle2, end],
-        onComplete: () {
-          remove(celebration);
-        }));
+    var start = SizeEffect.to(
+        _size, EffectController(duration: 0.3, curve: Curves.easeInExpo));
+    var idle1 = SizeEffect.to(_size * 1.05,
+        EffectController(duration: 0.4, curve: Curves.easeOutExpo));
+    var idle2 = SizeEffect.to(_size * 1.0, EffectController(duration: 0.6));
+    var end = SizeEffect.to(Vector2(_size.x, 0),
+        EffectController(duration: 0.2, curve: Curves.easeInBack));
+    Animate(celebration, [start, idle1, idle2, end],
+        onComplete: () => remove(celebration));
     add(celebration);
     await Future.delayed(Duration(milliseconds: 200));
     Sound.play("merge-end");
@@ -501,7 +496,7 @@ class MyGame extends BaseGame with TapDetector {
   }
 }
 
-class FallingEffect extends PositionComponent with HasGameRef<MyGame> {
+class FallingEffect extends PositionComponent {
   RRect? _rect;
   Color? _color;
   int _alpha = 0;
@@ -529,7 +524,7 @@ class FallingEffect extends PositionComponent with HasGameRef<MyGame> {
   }
 }
 
-class ColumnHint extends PositionComponent with HasGameRef<MyGame> {
+class ColumnHint extends PositionComponent {
   int appearanceState = 0;
   RRect rect;
   static final Paint _paint = PaletteEntry(Color(0xAAAADDFF)).paint()

@@ -1,13 +1,19 @@
+import 'dart:async';
+
 import 'package:confetti/confetti.dart';
 import 'package:flame/game.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:numbers/core/cell.dart';
 import 'package:numbers/core/cells.dart';
 import 'package:numbers/core/game.dart';
-import 'package:numbers/overlays/all.dart';
-import 'package:numbers/overlays/pause.dart';
-import 'package:numbers/overlays/stats.dart';
+import 'package:numbers/dialogs/big.dart';
+import 'package:numbers/dialogs/callout.dart';
+import 'package:numbers/dialogs/confirms.dart';
+import 'package:numbers/dialogs/pause.dart';
+import 'package:numbers/dialogs/piggy.dart';
+import 'package:numbers/dialogs/record.dart';
+import 'package:numbers/dialogs/revive.dart';
+import 'package:numbers/dialogs/stats.dart';
 import 'package:numbers/utils/analytic.dart';
 import 'package:numbers/utils/localization.dart';
 import 'package:numbers/utils/prefs.dart';
@@ -25,12 +31,15 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   MyGame? _game;
+  GameWidget? _gameWidget;
   int loadingState = 0;
 
-  Positioned? _coins;
   AnimationController? _rewardAnimation;
   AnimationController? _rewardLineAnimation;
   ConfettiController? _confettiController;
+
+  // bool _animationTime = false;
+  Timer? _timer;
 
   void initState() {
     super.initState();
@@ -39,7 +48,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _rewardAnimation!.addListener(() => setState(() {}));
     _rewardLineAnimation = AnimationController(
         vsync: this,
-        upperBound: Cell.maxDailyCoins * 1.0,
+        upperBound: PiggyDialog.capacity * 1.0,
         value: Pref.coinPiggy.value * 1.0);
     _rewardLineAnimation!.addListener(() => setState(() {}));
     _confettiController =
@@ -49,119 +58,169 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     var theme = Theme.of(context);
-    var rewardAvailble = Pref.coinPiggy.value >= Cell.maxDailyCoins;
     return WillPopScope(
         onWillPop: _onWillPop,
         child: Scaffold(
-            body: Stack(children: [
-          _game == null ? SizedBox() : GameWidget(game: _game!),
+            body: Stack(alignment: Alignment.bottomCenter, children: [
+          _game == null ? SizedBox() : _gameWidget!,
           Positioned(
-              top: _game!.bounds.top - 69.d,
-              right: 20.d,
-              child: Components.scores(theme, onTap: () {
-                _pause("record");
-                Analytics.design('guiClick:record:home');
-                // PlayGames.showLeaderboard("CgkIw9yXzt4XEAIQAQ");
-              })),
+              top: MyGame.bounds.top - 69.d,
+              left: MyGame.bounds.left,
+              right: MyGame.bounds.left,
+              child: _getHeader(theme)),
           Positioned(
-              top: _game!.bounds.top - 45.d,
-              right: 23.d,
-              child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                Text(Prefs.score.format(),
-                    style:
-                        theme.textTheme.headline5!.copyWith(letterSpacing: -1)),
-                SizedBox(width: 2.d),
-                SVG.show("cup", 22.d)
-              ])),
-          Positioned(
-              top: _game!.bounds.top - 70.d,
-              left: 22.d,
-              child: Components.stats(theme, onTap: () {
-                _pause("stats");
-                Analytics.design('guiClick:stats:home');
-                Rout.push(context, StatsOverlay());
-              })),
-          _coins = Positioned(
-              top: _game!.bounds.top - 70.d,
-              left: 73.d,
-              height: 52.d,
-              child: Components.coins(context, "home")),
-          Pref.tutorMode.value == 0
-              ? Positioned(
-                  top: _game!.bounds.top - 68.d,
-                  right: 22.d,
-                  left: 28.d,
-                  child: Text("home_tutor".l(),
-                      style: theme.textTheme.headline4,
-                      textAlign: TextAlign.center))
-              : SizedBox(),
-          Pref.tutorMode.value == 0
-              ? SizedBox()
-              : Positioned(
-                  top: _game!.bounds.bottom + 16.d,
-                  right: 24.d,
-                  left: 24.d,
-                  height: 68.d,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      IconButton(
-                          icon: SVG.show("pause", 48.d),
-                          iconSize: 56.d,
-                          onPressed: () => _pause("tap")),
-                      Expanded(child: SizedBox()),
-                      Column(children: [
-                        SizedBox(height: 5 * _rewardAnimation!.value),
-                        Expanded(
-                            child: _button(theme, 20.d, "piggy",
-                                () => _boost(rewardAvailble ? "piggy" : ""),
-                                width: 96.d,
-                                badge: _slider(
-                                    theme,
-                                    _rewardLineAnimation!.value.round(),
-                                    Cell.maxDailyCoins),
-                                colors: rewardAvailble
-                                    ? TColors.orange.value
-                                    : null))
-                      ]),
-                      SizedBox(width: 4.d),
-                      _button(
-                          theme, 96.d, "remove-color", () => _boost("color"),
-                          badge: _badge(theme, Pref.removeColor.value)),
-                      SizedBox(width: 4.d),
-                      _button(theme, 20.d, "remove-one", () => _boost("one"),
-                          badge: _badge(theme, Pref.removeOne.value)),
-                    ],
-                  )),
-          _game!.removingMode == null
-              ? SizedBox()
-              : Positioned(
-                  top: _game!.bounds.bottom + 10.d,
-                  right: 4.d,
-                  left: 4.d,
-                  height: 86.d,
-                  child: Container(
-                      padding: EdgeInsets.fromLTRB(32.d, 28.d, 32.d, 32.d),
-                      decoration: BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                                blurRadius: 3.d,
-                                color: Colors.black,
-                                offset: Offset(0.5.d, 2.d))
-                          ],
-                          color: theme.cardColor,
-                          shape: BoxShape.rectangle,
-                          borderRadius: BorderRadius.all(Radius.circular(16))),
-                      child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("home_rm_${_game!.removingMode!}".l()),
-                            GestureDetector(
-                                child: SVG.show("close", 32.d),
-                                onTap: _onRemoveBlock)
-                          ]))),
+              top: MyGame.bounds.bottom + 10.d,
+              left: MyGame.bounds.left - 22.d,
+              right: MyGame.bounds.left,
+              child: _getFooter(theme)),
+          _underFooter(),
           Center(child: Components.confetty(_confettiController!))
         ])));
+  }
+
+  Widget _getHeader(ThemeData theme) {
+    if (Pref.tutorMode.value == 0) {
+      return Center(
+          child: Text("home_tutor".l(), style: theme.textTheme.headline4));
+    }
+    return SizedBox(
+        height: 56.d,
+        child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Components.stats(theme, onTap: () {
+            _pause("stats");
+            Analytics.design('guiClick:stats:home');
+            Rout.push(context, StatsDialog());
+          }),
+          Components.coins(context, "home", clickable: false),
+          Expanded(
+              child:
+                  Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            SizedBox(height: 4.d),
+            Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+              Text(Prefs.score.format(),
+                  style:
+                      theme.textTheme.headline5!.copyWith(letterSpacing: -1)),
+              SizedBox(width: 2.d),
+              SVG.show("cup", 22.d)
+            ]),
+            Components.scores(theme, onTap: () {
+              _pause("record");
+              Analytics.design('guiClick:record:home');
+              // GamesServices.showLeaderboards();
+            })
+          ]))
+        ]));
+  }
+
+  Widget _getFooter(ThemeData theme) {
+    if (Pref.tutorMode.value == 0) return SizedBox();
+    if (_game!.removingMode != null) {
+      return Padding(
+          padding: EdgeInsets.only(left: 22.d),
+          child: Container(
+              padding: EdgeInsets.fromLTRB(24.d, 18.d, 24.d, 20.d),
+              decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                        blurRadius: 3.d,
+                        color: Colors.black,
+                        offset: Offset(0.5.d, 2.d))
+                  ],
+                  color: theme.cardColor,
+                  shape: BoxShape.rectangle,
+                  borderRadius: BorderRadius.all(Radius.circular(16))),
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("home_rm_${_game!.removingMode!}".l()),
+                    GestureDetector(
+                        child: SVG.show("close", 32.d), onTap: _onRemoveBlock)
+                  ])));
+    }
+    return SizedBox(
+        height: 68.d,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            IconButton(
+                icon: SVG.show("pause", 48.d),
+                iconSize: 72.d,
+                onPressed: () => _pause("tap")),
+            Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                  SizedBox(height: 5 * _rewardAnimation!.value),
+                  Expanded(
+                      child: _button(
+                          theme, 20.d, "piggy", () => _boost("piggy"),
+                          // width: 96.d,
+                          badge: _slider(
+                              theme,
+                              _rewardLineAnimation!.value.round(),
+                              PiggyDialog.capacity),
+                          colors: Pref.coinPiggy.value >= PiggyDialog.capacity
+                              ? TColors.orange.value
+                              : null))
+                ])),
+            SizedBox(width: 4.d),
+            _button(theme, 96.d, "remove-color", () => _boost("color"),
+                badge: _badge(theme, Pref.removeColor.value)),
+            SizedBox(width: 4.d),
+            _button(theme, 20.d, "remove-one", () => _boost("one"),
+                badge: _badge(theme, Pref.removeOne.value)),
+          ],
+        ));
+  }
+
+  _underFooter() {
+    return SizedBox();
+    /* var isAdsReady = true;//Ads.isReady();
+    if (isAdsReady && _timer == null) {
+      var duration = Duration(
+          milliseconds: _animationTime
+              ? FreeCoinsDialog.showTime
+              : FreeCoinsDialog.waitingTime +
+                  Random().nextInt(FreeCoinsDialog.waitingTime));
+      _timer = Timer(duration, () {
+        _animationTime = !_animationTime;
+        _timer = null;
+        setState(() {});
+      });
+    }
+
+    if (!_animationTime) {
+      var isBannerAdReady = Ads.isReady(AdPlace.Banner);
+      var ad = Ads.getBanner("game", size: AdSize.banner);
+      if (!isBannerAdReady) return SizedBox();
+      return Positioned(
+          bottom: 2.d,
+          child: ClipRRect(
+              borderRadius: BorderRadius.all(Radius.circular(8.d)),
+              child: SizedBox(
+                  width: ad.size.width.toDouble(),
+                  height: ad.size.height.toDouble(),
+                  child: AdWidget(ad: ad))));
+    }
+    return Positioned(
+        left: 0,
+        bottom: 0.d,
+        height: 120.d,
+        child: GestureDetector(
+            onTap: _showFreeCoinsDialog,
+            child:
+                Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+              SizedBox(
+                  width: 80.d,
+                  child: RiveAnimation.asset('anims/nums-character.riv',
+                      stateMachines: ["runState"])),
+              Container(
+                  height: 44.d,
+                  alignment: Alignment.center,
+                  padding: EdgeInsets.symmetric(horizontal: 12.d),
+                  child: Text("freecoins_catch".l()),
+                  decoration: _badgeDecoration(color: Colors.white)),
+            ]))); */
   }
 
   Widget _button(
@@ -222,17 +281,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           Positioned(
               left: 32.d,
               right: 4.d,
-              child: Text(label, style: TextStyle(fontSize: 12.d))),
+              child: Text(label,
+                  style: TextStyle(fontSize: 10.d),
+                  textAlign: TextAlign.center)),
         ]));
   }
 
-  Decoration _badgeDecoration({double? cornerRadius}) {
+  Decoration _badgeDecoration({double? cornerRadius, Color? color}) {
     return BoxDecoration(
         boxShadow: [
           BoxShadow(
               blurRadius: 3.d, color: Colors.black, offset: Offset(0.5.d, 1.d))
         ],
-        color: Colors.pink[700],
+        color: color ?? Colors.pink[700],
         shape: BoxShape.rectangle,
         borderRadius: BorderRadius.all(Radius.circular(cornerRadius ?? 12.d)));
   }
@@ -242,7 +303,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     switch (event) {
       case GameEvent.big:
         await Future.delayed(Duration(milliseconds: 250));
-        _widget = Overlays.bigValue(context, value, _confettiController!);
+        _widget = BigBlockDialog(value, _confettiController!);
         Prefs.increaseBig(value);
         break;
       case GameEvent.boost:
@@ -252,36 +313,47 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _confettiController!.play();
         return;
       case GameEvent.completeTutorial:
-        _widget = Overlays.endTutorial(context, _confettiController!);
+        _widget = ConfirmDialog(_confettiController!);
         break;
       case GameEvent.lose:
         await Future.delayed(Duration(seconds: 1));
-        _widget = Overlays.revive(context, _game!.numRevives);
+        _widget = ReviveDialog(_game!.numRevives);
         break;
-      case GameEvent.openPiggy:
-        Pref.coinPiggy.set(0);
-        Pref.coin.increase(value, itemType: "game", itemId: "random");
-        _rewardLineAnimation!
-            .animateTo(0, duration: const Duration(milliseconds: 400));
+      case GameEvent.bigReward:
+      case GameEvent.recordReward:
+      case GameEvent.piggyReward:
+      case GameEvent.freeCoins:
+        if (event == GameEvent.piggyReward) {
+          Pref.coinPiggy.set(0);
+          _rewardLineAnimation!
+              .animateTo(0, duration: const Duration(milliseconds: 400));
+        }
+        Pref.coin.increase(value, itemType: "game", itemId: event.name);
+        if (event == GameEvent.recordReward) {
+          _closeGame();
+          return;
+        }
+        Sound.play("win");
+        setState(() {});
         return;
       case GameEvent.remove:
         _onRemoveBlock();
         break;
       case GameEvent.reward:
-        _game!.showReward(
-            value,
-            Vector2(_game!.bounds.center.dx, _game!.bounds.bottom + 8.d),
-            GameEvent.rewarded);
+        _showReward(value, GameEvent.rewarded,
+            Vector2(MyGame.bounds.center.dx, MyGame.bounds.bottom + 8.d));
         return;
       case GameEvent.rewarded:
         var dailyCoins = Pref.coinPiggy.value + value;
-        Pref.coinPiggy.set(dailyCoins.clamp(0, Cell.maxDailyCoins));
+        Pref.coinPiggy.set(dailyCoins.clamp(0, PiggyDialog.capacity));
         _rewardAnimation!.value = 1;
         _rewardAnimation!.animateTo(0,
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOutSine);
         _rewardLineAnimation!.animateTo(Pref.coinPiggy.value * 1.0,
             duration: const Duration(seconds: 1), curve: Curves.easeInOutSine);
+        if (dailyCoins >= PiggyDialog.capacity)
+          await _boost("piggy", playApplaud: true);
         return;
       case GameEvent.score:
         setState(() {});
@@ -293,23 +365,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       if (event == GameEvent.lose) {
         if (result == null) {
           if (value > 0) {
-            await Rout.push(
-                context, Overlays.record(context, _confettiController!));
-            await Future.delayed(Duration(milliseconds: 150));
+            var r =
+                await Rout.push(context, RecordDialog(_confettiController!));
+            if (r != null) {
+              _showReward(r[1], GameEvent.recordReward);
+            }
+            return;
           }
-
-          Analytics.endProgress("main", Pref.playCount.value, Pref.record.value,
-              _game!.numRevives);
-
-          Navigator.of(context).pop();
+          _closeGame();
           return;
         }
+        Pref.coin.increase(result[1], itemType: "game", itemId: "revive");
         _game!.revive();
         setState(() {});
         return;
       }
+      if (event == GameEvent.big) {
+        _showReward(result[1], GameEvent.bigReward);
+        return;
+      }
       if (event == GameEvent.completeTutorial) {
-        if (result == "tutorFinish") Pref.tutorMode.set(1);
+        if (result[0] == "tutorFinish") Pref.tutorMode.set(1);
         MyGame.boostNextMode = 1;
         _createGame();
       }
@@ -321,8 +397,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     MyGame.isPlaying = false;
     Analytics.design('guiClick:pause:$source');
     if (!showMenu) return;
-    var result = await Rout.push(context, PauseOverlay());
-    _onPauseButtonsClick(result ?? "resume");
+    var result = await Rout.push(context, PauseDialog());
+    _onPauseButtonsClick(result == null ? "resume" : result[0]);
   }
 
   void _onPauseButtonsClick(String type) {
@@ -337,12 +413,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  _boost(String type) async {
+  _boost(String type, {bool? playApplaud}) async {
     MyGame.isPlaying = false;
-    if (type == "") {
-      await Rout.push(context,
-          Overlays.message(context, "clt_piggy_error".l(), icon: "coin"),
-          barrierDismissible: true);
+    if (type == "piggy") {
+      var result =
+          await Rout.push(context, PiggyDialog(playApplaud: playApplaud));
+      if (result != null) _showReward(result[1], GameEvent.piggyReward);
       MyGame.isPlaying = true;
       return;
     }
@@ -352,26 +428,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       setState(() => _game!.removingMode = type);
       return;
     }
-    EdgeInsets padding = EdgeInsets.only(right: 16, bottom: 80);
+    EdgeInsets padding = EdgeInsets.only(
+        right: MyGame.bounds.left, top: MyGame.bounds.bottom - 78.d);
     if (type == "next")
-      padding = EdgeInsets.only(left: 32, top: _game!.bounds.top + 68);
-
+      padding = EdgeInsets.only(
+          left: (Device.size.width - Callout.chromeWidth) * 0.5,
+          top: MyGame.bounds.top + 68.d);
     var result = await Rout.push(
-        context,
-        Overlays.callout(context, "clt_${type}_text".l(), type,
-            padding: padding, hasCoinButton: type != "piggy"),
-        barrierColor: Colors.transparent,
-        barrierDismissible: true);
+        context, Callout("clt_${type}_text".l(), type, padding: padding),
+        barrierColor: Colors.transparent, barrierDismissible: true);
     if (result != null) {
+      Pref.coin.increase(result[1], itemType: "game", itemId: result[0]);
       if (type == "next") {
         _game!.boostNext();
-        return;
-      }
-      if (type == "piggy") {
-        MyGame.isPlaying = true;
-        _game!.showReward(Cell.maxDailyCoins,
-            Vector2(_coins!.top!, _coins!.left! + 8.d), GameEvent.openPiggy);
-        Sound.play("win");
         return;
       }
       if (type == "one") Pref.removeOne.set(1);
@@ -384,14 +453,25 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   void _createGame() {
     Analytics.setScreen("game");
-    var padding = 24.d + (Device.size.aspectRatio - 0.5) * 200.d;
-    var width = Device.size.width - padding * 2;
-    Cell.updateSizes(width / Cells.width);
-    var t = (Device.size.height - ((Cells.height + 1) * Cell.diameter)) * 0.5;
-    var bounds = Rect.fromLTRB(
-        padding, t, Device.size.width - padding, t + Cell.diameter * 7);
-    _game = MyGame(bounds: bounds, onGameEvent: _onGameEventHandler);
+    var top = 140.d;
+    var bottom = 180.d;
+    Cell.updateSizes((Device.size.height - top - bottom) / (Cells.height + 1));
+    var padding = (Device.size.width - (Cells.width * Cell.diameter)) * 0.5;
+    MyGame.bounds = Rect.fromLTRB(
+        padding, top, Device.size.width - padding, Device.size.height - bottom);
+    _game = MyGame(onGameEvent: _onGameEventHandler);
+    _gameWidget = GameWidget(game: _game!);
   }
+
+  /* _showFreeCoinsDialog() async {
+    // Check Fruad n frequently tap on cube man
+    if (DateTime.now().millisecondsSinceEpoch - FreeCoinsDialog.earnedAt <
+        FreeCoinsDialog.waitingTime) return;
+    MyGame.isPlaying = false;
+    var result = await Rout.push(context, FreeCoinsDialog());
+    if (result != null) _showReward(result[1], GameEvent.freeCoins);
+    MyGame.isPlaying = true;
+  } */
 
   void _onRemoveBlock() {
     _game!.removingMode = null;
@@ -406,9 +486,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _rewardAnimation!.dispose();
-    _confettiController!.dispose();
-    _rewardLineAnimation!.dispose();
+    _timer?.cancel();
+    _rewardAnimation?.dispose();
+    _confettiController?.dispose();
+    _rewardLineAnimation?.dispose();
     super.dispose();
+  }
+
+  _showReward(int value, GameEvent event, [Vector2? target]) async {
+    MyGame.isPlaying = true;
+    if (value <= 0) return;
+    await Future.delayed(Duration(milliseconds: 200));
+    _game!.showReward(value,
+        target ?? Vector2(MyGame.bounds.top, Device.size.width * 0.5), event);
+  }
+
+  void _closeGame() {
+    Analytics.endProgress(
+        "main", Pref.playCount.value, Pref.record.value, _game!.numRevives);
+    Navigator.of(context).pop();
   }
 }

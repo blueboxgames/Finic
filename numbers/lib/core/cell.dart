@@ -1,21 +1,19 @@
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
-import 'package:flame/game.dart';
 import 'package:flame/palette.dart';
 import 'package:flame_svg/svg.dart';
-import 'package:flutter/animation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/painting.dart';
+import 'package:numbers/animations/animate.dart';
 import 'package:numbers/core/cells.dart';
 import 'package:numbers/core/game.dart';
 import 'package:numbers/utils/prefs.dart';
+import 'package:numbers/utils/utils.dart';
 
 enum CellState { Init, Float, Falling, Fell, Fixed }
 
-class Cell extends PositionComponent with HasGameRef<MyGame> {
+class Cell extends PositionComponent {
   static double diameter = 64.0;
   static double padding = 1.8;
   static double minSpeed = 0.01;
@@ -23,7 +21,8 @@ class Cell extends PositionComponent with HasGameRef<MyGame> {
   static double roundness = 7.0;
   static double thickness = 4.6;
   static final firstBigRecord = 8;
-  static int maxRandomValue = 3;
+  static int maxRandomValue = 4;
+  static int lastRandomValue = 9;
   static final colors = [
     PaletteEntry(Color(0xFF191C1D)),
     PaletteEntry(Color(0xFF9600FF)),
@@ -45,17 +44,22 @@ class Cell extends PositionComponent with HasGameRef<MyGame> {
     PaletteEntry(Color(0xFF004940))
   ];
   static final scales = [0, 1, 0.9, 0.75, 0.65, 0.6, 0.55];
-  static int maxDailyCoins = 100;
   static double get radius => diameter * 0.5;
   static double get strock => padding * 1.1;
+  static double getX(int col) => MyGame.bounds.left + col * diameter + radius;
+  static double getY(int row) =>
+      MyGame.bounds.top + (Cells.height - row) * diameter + radius;
   static int getScore(int value) => pow(2, value) as int;
   // static int getNextValue(int step) => [1, 2, 3, 3, 2, 2, 1, 1][step];
   // static int getNextColumn(int step) => [0, 1, 1, 2, 4, 4, 4, 4][step];
-  static int getNextValue(int step) => Pref.tutorMode.value == 0
-      ? [1, 3, 5, 1, 2, 4, 5][step]
-      : MyGame.random.nextInt(maxRandomValue) + 1;
-  static int getNextColumn(int step) => Pref.tutorMode.value == 0
-      ? [2, 0, 3, 2, 1, 1, 2][step]
+  static int getNextValue(int seed) {
+    if (Pref.tutorMode.value == 0) return [1, 3, 5, 1, 2, 4, 5][seed];
+    var min = seed.min(1).max((maxRandomValue * 0.4).ceil());
+    return min + MyGame.random.nextInt(maxRandomValue - min);
+  }
+
+  static int getNextColumn(int seed) => Pref.tutorMode.value == 0
+      ? [2, 0, 3, 2, 1, 1, 2][seed]
       : MyGame.random.nextInt(Cells.width);
 
   static final _center = Vector2(0, -3);
@@ -110,12 +114,21 @@ class Cell extends PositionComponent with HasGameRef<MyGame> {
 
     _sidePaint = colors[value].withAlpha(180).paint();
     _overPaint = colors[value].paint();
+
+    var shadows = <Shadow>[];
+    if (hiddenMode == 0) {
+      shadows.add(BoxShadow(
+          color: Colors.black.withAlpha(150),
+          blurRadius: 3,
+          offset: Offset(0, radius * 0.05)));
+    }
     _textPaint = TextPaint(
-        config: TextPaintConfig(
+        style: TextStyle(
             fontSize:
                 radius * scales[getScore(value).toString().length.clamp(0, 5)],
             fontFamily: 'quicksand',
-            color: hiddenMode > 1 ? colors[value].color : Colors.white));
+            color: hiddenMode > 1 ? colors[value].color : Colors.white,
+            shadows: shadows));
 
     if (hiddenMode > 0)
       _hiddenPaint = Paint()
@@ -125,11 +138,10 @@ class Cell extends PositionComponent with HasGameRef<MyGame> {
     if (reward > 0) _coin = await Svg.load('images/coin.svg');
 
     size = Vector2(1.3, 1.3);
-    addEffect(ScaleEffect(
-        size: Vector2(1, 1),
-        duration: matched ? 0.2 : 0.3,
-        curve: Curves.easeOutBack,
-        onComplete: _animationComplete));
+    var controller = EffectController(
+        duration: matched ? 0.2 : 0.3, curve: Curves.easeOutBack);
+    add(SizeEffect.to(Vector2(1, 1), controller));
+    Animate.checkCompletion(controller, _animationComplete);
     return this;
   }
 
@@ -141,11 +153,10 @@ class Cell extends PositionComponent with HasGameRef<MyGame> {
   }
 
   void delete(Function(Cell)? onDelete) {
-    addEffect(ScaleEffect(
-        size: Vector2(0, 0),
-        duration: MyGame.random.nextDouble() * 0.8,
-        curve: Curves.easeInBack,
-        onComplete: () => onDelete?.call(this)));
+    var controller = EffectController(
+        duration: MyGame.random.nextDouble() * 0.8, curve: Curves.easeInBack);
+    add(SizeEffect.to(Vector2.zero(), controller));
+    Animate.checkCompletion(controller, () => onDelete?.call(this));
   }
 
   @override
@@ -165,9 +176,7 @@ class Cell extends PositionComponent with HasGameRef<MyGame> {
   }
 
   @override
-  String toString() {
-    return "Cell c:$column, r:$row, v:$value, s:$state}";
-  }
+  String toString() => "Cell c:$column, r:$row, v:$value, s:$state}";
 
   static void updateSizes(double _diameter) {
     diameter = _diameter;

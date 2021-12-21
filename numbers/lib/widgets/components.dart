@@ -1,10 +1,9 @@
 import 'dart:math';
 
 import 'package:confetti/confetti.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:numbers/core/game.dart';
-import 'package:numbers/overlays/all.dart';
+import 'package:numbers/dialogs/toast.dart';
 import 'package:numbers/utils/ads.dart';
 import 'package:numbers/utils/analytic.dart';
 import 'package:numbers/utils/localization.dart';
@@ -81,13 +80,14 @@ class Components {
     var theme = Theme.of(context);
     return Expanded(
         child: Container(
-            padding: EdgeInsets.fromLTRB(10.d, 6.d, 10.d, 6.d),
+            padding: EdgeInsets.all(8.d),
             decoration: ButtonDecor(TColors.whiteFlat.value, 12.d, true, false),
             child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 SVG.show(boost, 58.d),
                 _has(boost) ? SVG.show("accept", 22.d) : SizedBox()
               ]),
+              SizedBox(height: 6.d),
               Text(title,
                   style: theme.textTheme.subtitle2,
                   textAlign: TextAlign.center),
@@ -112,13 +112,11 @@ class Components {
                   height: 39.d,
                   child: BumpedButton(
                       cornerRadius: 8.d,
-                      errorMessage: Overlays.message(
-                          context, "ads_unavailable".l(),
-                          monoIcon: "0"),
+                      errorMessage: Toast("ads_unavailable".l(), monoIcon: "A"),
                       isEnable: !_has(boost) && Ads.isReady(),
                       colors: TColors.orange.value,
                       content: Row(children: [
-                        SVG.icon("0", theme, scale: 0.7),
+                        SVG.icon("A", theme, scale: 0.7),
                         Expanded(
                             child: Text("free_l".l(),
                                 textAlign: TextAlign.center,
@@ -133,13 +131,12 @@ class Components {
       context, String boost, int cost, Function? onSelect) async {
     if (cost > 0) {
       if (Pref.coin.value < cost) {
-        Rout.push(context,
-            Overlays.message(context, "coin_notenough".l(), icon: "coin"));
+        Rout.push(context, Toast("coin_notenough".l(), icon: "coin"));
         return;
       }
     } else {
-      var complete = await Ads.show();
-      if (!complete) return;
+      var reward = await Ads.showRewarded();
+      if (reward == null) return;
     }
     Pref.coin.increase(-cost, itemType: "start", itemId: boost);
 
@@ -156,7 +153,7 @@ class Components {
     return ConfettiWidget(
         gravity: 0.5,
         maxBlastForce: 50,
-        numberOfParticles: 30,
+        numberOfParticles: 20,
         emissionFrequency: 0.05,
         confettiController: controller,
         blastDirectionality: BlastDirectionality.explosive,

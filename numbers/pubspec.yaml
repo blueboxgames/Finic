@@ -3,7 +3,7 @@ description: A new Flutter project.
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.3.2+10302
+version: 1.6.3+10603
 
 environment:
   sdk: '>=2.12.0 <3.0.0'
@@ -11,27 +11,23 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  appsflyer_sdk: ^6.2.4+4-nullsafety
   confetti: ^0.6.0
   cupertino_icons: ^1.0.3
   device_info: ^2.0.2
-  flame: ^1.0.0-rc13
-  flame_svg: ^1.0.0-rc3
-  firebase_analytics: ^8.2.0
-  firebase_core: ^1.4.0
-  firebase_messaging: ^10.0.4
-  flutter_local_notifications: ^6.0.0
+  flame: ^1.0.0
+  flame_svg: ^1.0.0
+  flutter_local_notifications: ^9.1.5
+  flutter_rating_bar: ^4.0.0
   flutter_svg: ^0.22.0
-  gameanalytics_sdk: ^1.0.6
   intl: ^0.17.0
-  path_provider: ^2.0.2
+  path_provider: ^2.0.8
   screenshot: ^1.2.3
   share: ^2.0.4
-  shared_preferences: ^2.0.6
+  shared_preferences: ^2.0.11
   smartlook: ^2.0.1
   soundpool: ^2.1.0
-  rive: ^0.7.22
-  url_launcher: ^6.0.12
+  rive: ^0.7.33
+  url_launcher: ^6.0.17
   vibration: ^1.7.4-nullsafety.0
 
 dev_dependencies:
