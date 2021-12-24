@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:numbers/core/cell.dart';
 import 'package:numbers/core/game.dart';
-import 'package:numbers/dialogs/rating.dart';
 import 'package:numbers/dialogs/toast.dart';
 import 'package:numbers/utils/ads.dart';
 import 'package:numbers/utils/localization.dart';
@@ -129,11 +128,11 @@ class _StartDialogState extends AbstractDialogState<StartDialog> {
         return;
       }
       Pref.coin.increase(-cost, itemType: "start", itemId: boost);
-      _updateBoosts();
+      _updateBoosts(boost);
       _onUpdate();
     } else {
       waiting.init(boost, cost, () {
-        if (Ads.hasReward) _updateBoosts();
+        if (Ads.hasReward) _updateBoosts(boost);
         _onUpdate();
       });
       _onUpdate();
@@ -141,9 +140,9 @@ class _StartDialogState extends AbstractDialogState<StartDialog> {
     }
   }
 
-  _updateBoosts() {
-    if (waiting.type == "next") MyGame.boostNextMode = 1;
-    if (waiting.type == "512") MyGame.boostBig = true;
+  _updateBoosts(String type) {
+    if (type == "next") MyGame.boostNextMode = 1;
+    if (type == "512") MyGame.boostBig = true;
   }
 
   bool _has(String boost) {
@@ -171,6 +170,5 @@ class _StartDialogState extends AbstractDialogState<StartDialog> {
     MyGame.boostBig = false;
     _startButtonLabel = "start_l".l();
     _onUpdate();
-    await RatingDialog.showRating(context);
   }
 }
