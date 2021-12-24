@@ -18,7 +18,7 @@ import 'dialogs.dart';
 class StartDialog extends AbstractDialog {
   StartDialog()
       : super(DialogMode.start,
-            height: 330.d,
+            height: 336.d,
             showCloseButton: false,
             title: "start_title".l(),
             padding: EdgeInsets.fromLTRB(12.d, 12.d, 12.d, 14.d));
@@ -50,7 +50,7 @@ class _StartDialogState extends AbstractDialogState<StartDialog> {
         SizedBox(width: 2.d),
         _boostButton("start_next".l(), "next")
       ])),
-      SizedBox(height: 10.d),
+      SizedBox(height: 8.d),
       Container(
           height: 80.d,
           child: BumpedButton(
@@ -76,19 +76,21 @@ class _StartDialogState extends AbstractDialogState<StartDialog> {
         child: Container(
             padding: EdgeInsets.all(8.d),
             decoration: ButtonDecor(TColors.whiteFlat.value, 12.d, true, false),
-            child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
+            child:
+                Column(mainAxisAlignment: MainAxisAlignment.start, children: [
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 SVG.show(boost, 58.d),
                 _has(boost) ? SVG.show("accept", 22.d) : SizedBox()
               ]),
               SizedBox(height: 6.d),
-              Text(title,
-                  style: theme.textTheme.subtitle2,
-                  textAlign: TextAlign.center),
+              Expanded(
+                  child: Text(title,
+                      style: theme.textTheme.subtitle2,
+                      textAlign: TextAlign.center)),
               SizedBox(height: 6.d),
               SizedBox(
                   width: 92.d,
-                  height: 39.d,
+                  height: 40.d,
                   child: BumpedButton(
                       cornerRadius: 8.d,
                       isEnable: !_has(boost),
@@ -103,7 +105,7 @@ class _StartDialogState extends AbstractDialogState<StartDialog> {
               SizedBox(height: 4.d),
               SizedBox(
                   width: 92.d,
-                  height: 39.d,
+                  height: 44.d,
                   child: BumpedButton(
                       cornerRadius: 8.d,
                       errorMessage: Toast("ads_unavailable".l(), monoIcon: "A"),
@@ -114,7 +116,7 @@ class _StartDialogState extends AbstractDialogState<StartDialog> {
                         Expanded(
                             child: Text("free_l".l(),
                                 textAlign: TextAlign.center,
-                                style: theme.textTheme.headline5))
+                                style: theme.textTheme.headline6))
                       ]),
                       onTap: () => _onBoostTap(boost, 0))),
               SizedBox(height: 6.d)

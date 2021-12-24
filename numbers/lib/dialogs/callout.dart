@@ -38,7 +38,7 @@ class _CalloutState extends AbstractDialogState<Callout> {
     var hasCoinButton = widget.hasCoinButton ?? true;
     var hasCoin = Pref.coin.value > cost;
     Callout.chromeWidth = hasCoin ? 132.d : 220.d;
-    Callout.chromeHeight = hasCoin ? 100.d : 84.d;
+    Callout.chromeHeight = hasCoin ? 104.d : 88.d;
     Sound.play("pop");
     return Stack(children: [
       Positioned(
@@ -68,7 +68,7 @@ class _CalloutState extends AbstractDialogState<Callout> {
                     Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                       SizedBox(
                           width: 98.d,
-                          height: 40.d,
+                          height: 45.d,
                           child: hasCoinButton
                               ? BumpedButton(
                                   cornerRadius: 8.d,
@@ -87,7 +87,7 @@ class _CalloutState extends AbstractDialogState<Callout> {
                           ? SizedBox()
                           : SizedBox(
                               width: 98.d,
-                              height: 40.d,
+                              height: 45.d,
                               child: BumpedButton(
                                   cornerRadius: 8.d,
                                   isEnable: Ads.isReady,
