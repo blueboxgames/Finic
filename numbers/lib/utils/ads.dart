@@ -21,7 +21,7 @@ class Ads {
   static var prefix;
 
   static bool isReady = false;
-  // static RewardItem? reward;
+  static bool hasReward = false;
 
   static init() async {
     Apptutti.init(listener: (map) {
@@ -60,24 +60,28 @@ class Ads {
     }
     var r = await Apptutti.isAdReady();
     isReady = r ?? false;
+    onUpdate?.call(AdPlace.Rewarded, AdState.Loaded);
     return isReady;
     // _placements.containsKey(_place) &&
     //     _placements[_place] == AdState.Loaded;
   }
 
-  static showInterstitial(AdPlace place) async {
+  static showInterstitial(AdPlace place) {
     if (Pref.noAds.value > 0) return;
     if (!isReady) return;
     Apptutti.showAd(Apptutti.ADTYPE_INTERSTITIAL, listener: _listener);
   }
 
-  static Future<dynamic> showRewarded() async {
+  static showRewarded() async {
+    hasReward = false;
     if (!isReady) return;
     Apptutti.showAd(Apptutti.ADTYPE_REWARDED, listener: _listener);
   }
 
   static void _listener(Map<dynamic, dynamic> args) {
-    print("_tuttiAdsListener => $args");
+    if (args[Apptutti.ADTYPE] == Apptutti.ADTYPE_REWARDED &&
+        args[Apptutti.ADEVENT] == Apptutti.ADEVENT_COMPLETE) hasReward = true;
+    print("Ads => $args   $hasReward");
   }
 
   static void _updateState(AdPlace place, AdState state,

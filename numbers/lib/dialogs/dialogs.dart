@@ -50,6 +50,7 @@ class AbstractDialog extends StatefulWidget {
 
 class AbstractDialogState<T extends AbstractDialog> extends State<T> {
   List<Widget> stepChildren = <Widget>[];
+  AdWaiting waiting = AdWaiting();
   @override
   void initState() {
     Ads.onUpdate = _onAdsUpdate;
@@ -73,6 +74,7 @@ class AbstractDialogState<T extends AbstractDialog> extends State<T> {
     rows.add(chromeFactory(theme, width));
     children.add(
         Column(mainAxisAlignment: MainAxisAlignment.center, children: rows));
+    children.add(Visibility(child: waiting, visible: waiting.visible));
     children.addAll(stepChildren);
 
     return WillPopScope(
@@ -89,13 +91,25 @@ class AbstractDialogState<T extends AbstractDialog> extends State<T> {
       Rout.push(context, Toast("coin_notenough".l()));
       return;
     }
+    waiting.init(type, coin, _onWaitAdTap);
     if (showAd) {
-      var reward = await Ads.showRewarded();
-      if (reward == null) return;
+      waiting.visible = true;
+      setState(() {});
+      Ads.showRewarded();
+      return;
     } else if (coin > 0 && Ads.showSuicideInterstitial) {
-      await Ads.showInterstitial(AdPlace.Interstitial);
+      waiting.visible = true;
+      setState(() {});
+      Ads.showInterstitial(AdPlace.Interstitial);
+      return;
     }
     Navigator.of(context).pop([type, coin]);
+  }
+
+  void _onWaitAdTap() {
+    waiting.visible = false;
+    setState(() {});
+    if (Ads.hasReward) Navigator.of(context).pop([waiting.type, waiting.coin]);
   }
 
   Widget bannerAdsFactory(String type) {
@@ -191,6 +205,41 @@ class AbstractDialogState<T extends AbstractDialog> extends State<T> {
   void dispose() {
     super.dispose();
     Ads.onUpdate = null;
+  }
+}
+
+// ignore: must_be_immutable
+class AdWaiting extends StatelessWidget {
+  int coin = 0;
+  Function()? onTap;
+  String type = "";
+  bool visible = false;
+  @override
+  Widget build(BuildContext context) {
+    var theme = Theme.of(context);
+    return GestureDetector(
+        onTap: _onTap,
+        child: Container(
+            alignment: Alignment.topCenter,
+            color: theme.backgroundColor.withAlpha(220),
+            child:
+                Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              SVG.icon("E", theme, scale: 2),
+              SizedBox(height: 12.d),
+              Text("continue_l".l(), style: theme.textTheme.headline2)
+            ])));
+  }
+
+  void init(String type, int coin, void Function() onTap) {
+    this.type = type;
+    this.coin = coin;
+    this.onTap = onTap;
+    this.visible = true;
+  }
+
+  void _onTap() {
+    visible = false;
+    this.onTap?.call();
   }
 }
 
