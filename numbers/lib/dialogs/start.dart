@@ -34,7 +34,7 @@ class _StartDialogState extends AbstractDialogState<StartDialog> {
   void initState() {
     super.initState();
     if (Pref.tutorMode.value == 0)
-      Timer(const Duration(milliseconds: 100), _onStart);
+      Timer(const Duration(milliseconds: 100), _startGame);
   }
 
   @override
@@ -100,7 +100,7 @@ class _StartDialogState extends AbstractDialogState<StartDialog> {
                                 textAlign: TextAlign.center,
                                 style: theme.textTheme.bodyText2))
                       ]),
-                      onTap: () => _onBoostTap(context, boost, 100))),
+                      onTap: () => _onBoostTap(boost, 100))),
               SizedBox(height: 4.d),
               SizedBox(
                   width: 92.d,
@@ -117,32 +117,33 @@ class _StartDialogState extends AbstractDialogState<StartDialog> {
                                 textAlign: TextAlign.center,
                                 style: theme.textTheme.headline5))
                       ]),
-                      onTap: () => _onBoostTap(context, boost, 0))),
+                      onTap: () => _onBoostTap(boost, 0))),
               SizedBox(height: 6.d)
             ])));
   }
 
-  void _onBoostTap(context, String boost, int cost) async {
+  void _onBoostTap(String boost, int cost) async {
     if (cost > 0) {
       if (Pref.coin.value < cost) {
         Rout.push(context, Toast("coin_notenough".l(), icon: "coin"));
         return;
       }
+      Pref.coin.increase(-cost, itemType: "start", itemId: boost);
+      _updateBoosts();
+      _onUpdate();
     } else {
-      waiting.init(boost, cost, _onBoostAdFinish);
+      waiting.init(boost, cost, () {
+        if (Ads.hasReward) _updateBoosts();
+        _onUpdate();
+      });
       _onUpdate();
       Ads.showRewarded();
     }
   }
 
-  _onBoostAdFinish() {
-    if (Ads.hasReward) {
-      Pref.coin
-          .increase(-waiting.coin, itemType: "start", itemId: waiting.type);
-      if (waiting.type == "next") MyGame.boostNextMode = 1;
-      if (waiting.type == "512") MyGame.boostBig = true;
-    }
-    _onUpdate();
+  _updateBoosts() {
+    if (waiting.type == "next") MyGame.boostNextMode = 1;
+    if (waiting.type == "512") MyGame.boostBig = true;
   }
 
   bool _has(String boost) {
@@ -156,7 +157,9 @@ class _StartDialogState extends AbstractDialogState<StartDialog> {
       waiting.init("start", 0, _startGame);
       _onUpdate();
       await Ads.showInterstitial(AdPlace.InterstitialVideo);
+      return;
     }
+    _startGame();
   }
 
   _onUpdate() => setState(() {});

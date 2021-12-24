@@ -1,15 +1,9 @@
 import 'dart:io';
 
 import 'package:app_tutti/apptutti.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:numbers/utils/analytic.dart';
 import 'package:numbers/utils/prefs.dart';
 
 class Ads {
-  static Map<AdPlace, AdState> _placements = Map();
-
   static Function(AdPlace, AdState)? onUpdate;
   static String platform = Platform.isAndroid ? "Android" : "iOS";
   static final rewardCoef = 10;
@@ -32,23 +26,6 @@ class Ads {
   /* static BannerAd getBanner(String type, {AdSize? size}) {
     var place = AdPlace.Banner;
     var name = place.name + "_" + type;
-    if (_ads.containsKey(name)) return _ads[name]! as BannerAd;
-    var _listener = BannerAdListener(
-        onAdLoaded: (ad) => _updateState(place, AdState.Loaded, ad),
-        onAdFailedToLoad: (ad, error) {
-          _updateState(place, AdState.FailedLoad, ad, error);
-          ad.dispose();
-        },
-        onAdOpened: (ad) => _updateState(place, AdState.Clicked, ad),
-        onAdClosed: (ad) => _updateState(place, AdState.Closed, ad),
-        onAdImpression: (ad) => _updateState(place, AdState.Show, ad));
-    _updateState(place, AdState.Request);
-    return _ads[name] = BannerAd(
-        size: size ?? AdSize.largeBanner,
-        adUnitId: place.id,
-        listener: _listener,
-        request: _request)
-      ..load();
   }
  */
 
@@ -62,8 +39,6 @@ class Ads {
     isReady = r ?? false;
     onUpdate?.call(AdPlace.Rewarded, AdState.Loaded);
     return isReady;
-    // _placements.containsKey(_place) &&
-    //     _placements[_place] == AdState.Loaded;
   }
 
   static showInterstitial(AdPlace place) {
@@ -82,23 +57,6 @@ class Ads {
     if (args[Apptutti.ADTYPE] == Apptutti.ADTYPE_REWARDED &&
         args[Apptutti.ADEVENT] == Apptutti.ADEVENT_COMPLETE) hasReward = true;
     print("Ads => $args   $hasReward");
-  }
-
-  static void _updateState(AdPlace place, AdState state,
-      [dynamic ad, Error? error]) {
-    _placements[place] = state;
-    onUpdate?.call(place, state);
-    if (state.order > 0)
-      Analytics.ad(state.order, 1 /* place.type */, place.name, "admob");
-    debugPrint("Ads ==> $place ${state.toString()} ${error ?? ''}");
-  }
-
-  static void pausedApp() {
-    _placements.forEach((key, value) {
-      if (key != AdPlace.Banner &&
-          (value == AdState.Show || value == AdState.RewardReceived))
-        _updateState(key, AdState.Clicked);
-    });
   }
 }
 

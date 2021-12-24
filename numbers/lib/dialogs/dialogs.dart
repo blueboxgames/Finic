@@ -91,14 +91,13 @@ class AbstractDialogState<T extends AbstractDialog> extends State<T> {
       Rout.push(context, Toast("coin_notenough".l()));
       return;
     }
-    waiting.init(type, coin, _onWaitAdTap);
     if (showAd) {
-      waiting.visible = true;
+      waiting.init(type, coin, _onWaitAdTap);
       setState(() {});
       Ads.showRewarded();
       return;
     } else if (coin > 0 && Ads.showSuicideInterstitial) {
-      waiting.visible = true;
+      waiting.init(type, coin, _onWaitAdTap);
       setState(() {});
       Ads.showInterstitial(AdPlace.Interstitial);
       return;
@@ -238,7 +237,7 @@ class AdWaiting extends StatelessWidget {
   }
 
   void _onTap() {
-    visible = false;
+    this.visible = false;
     this.onTap?.call();
   }
 }

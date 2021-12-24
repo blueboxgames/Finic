@@ -104,7 +104,8 @@ class _CalloutState extends AbstractDialogState<Callout> {
                                   onTap: () => buttonsClick(
                                       context, widget.type, 0, true)))
                     ])
-                  ])))
+                  ]))),
+      Visibility(child: waiting, visible: waiting.visible)
     ]);
   }
 }
