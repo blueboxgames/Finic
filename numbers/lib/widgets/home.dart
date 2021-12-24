@@ -175,7 +175,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   _underFooter() {
     return SizedBox();
-    /* var isAdsReady = true;//Ads.isReady();
+    /* var isAdsReady = true;//Ads.isReady;
     if (isAdsReady && _timer == null) {
       var duration = Duration(
           milliseconds: _animationTime

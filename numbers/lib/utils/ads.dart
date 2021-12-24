@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:app_tutti/apptutti.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +12,6 @@ class Ads {
 
   static Function(AdPlace, AdState)? onUpdate;
   static String platform = Platform.isAndroid ? "Android" : "iOS";
-  static Map<String, dynamic> _ads = Map();
   static final rewardCoef = 10;
   static final isSupportAdMob = true;
   static final isSupportUnity = false;
@@ -19,9 +19,15 @@ class Ads {
   static bool showSuicideInterstitial = false;
 
   static var prefix;
+
+  static bool isReady = false;
   // static RewardItem? reward;
 
-  static init() async {}
+  static init() async {
+    Apptutti.init(listener: (map) {
+      _isReady();
+    });
+  }
 
   /* static BannerAd getBanner(String type, {AdSize? size}) {
     var place = AdPlace.Banner;
@@ -46,32 +52,32 @@ class Ads {
   }
  */
 
-  static bool isReady([AdPlace? place]) {
+  static Future<bool?> _isReady([AdPlace? place]) async {
     var _place = place ?? AdPlace.Rewarded;
     if (_place != AdPlace.Rewarded) {
       if (Pref.playCount.value < _place.threshold) return false;
       if (Pref.noAds.value > 0) return false;
     }
-    return _placements.containsKey(_place) &&
-        _placements[_place] == AdState.Loaded;
+    var r = await Apptutti.isAdReady();
+    isReady = r ?? false;
+    return isReady;
+    // _placements.containsKey(_place) &&
+    //     _placements[_place] == AdState.Loaded;
   }
 
   static showInterstitial(AdPlace place) async {
     if (Pref.noAds.value > 0) return;
-    if (!_ads.containsKey(place.name)) {
-      debugPrint("Ads ==> attempt to show ${place.name} before loaded.");
-      return;
-    }
-    if (!isReady(place)) return;
+    if (!isReady) return;
+    Apptutti.showAd(Apptutti.ADTYPE_INTERSTITIAL, listener: _listener);
   }
 
   static Future<dynamic> showRewarded() async {
-    var place = AdPlace.Rewarded;
-    if (!_ads.containsKey(place.name)) {
-      debugPrint("Ads ==> attempt to show ${place.name} before loaded.");
-      return null;
-    }
-    return null;
+    if (!isReady) return;
+    Apptutti.showAd(Apptutti.ADTYPE_REWARDED, listener: _listener);
+  }
+
+  static void _listener(Map<dynamic, dynamic> args) {
+    print("_tuttiAdsListener => $args");
   }
 
   static void _updateState(AdPlace place, AdState state,

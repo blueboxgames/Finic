@@ -66,7 +66,7 @@ class _FreeCoinsDialogState extends AbstractDialogState<FreeCoinsDialog> {
           bottom: 4.d,
           right: 4.d,
           cornerRadius: 16.d,
-          isEnable: Ads.isReady(),
+          isEnable: Ads.isReady,
           colors: TColors.orange.value,
           errorMessage: Toast("ads_unavailable".l(), monoIcon: "A"),
           onTap: () =>

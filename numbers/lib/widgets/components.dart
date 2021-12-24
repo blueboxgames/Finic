@@ -113,7 +113,7 @@ class Components {
                   child: BumpedButton(
                       cornerRadius: 8.d,
                       errorMessage: Toast("ads_unavailable".l(), monoIcon: "A"),
-                      isEnable: !_has(boost) && Ads.isReady(),
+                      isEnable: !_has(boost) && Ads.isReady,
                       colors: TColors.orange.value,
                       content: Row(children: [
                         SVG.icon("A", theme, scale: 0.7),

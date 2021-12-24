@@ -11,6 +11,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  app_tutti:
+    git:
+      url: git://github.com/manjav/flutter_apptutti_sdk.git
+      ref: master
   confetti: ^0.6.0
   cupertino_icons: ^1.0.3
   device_info: ^2.0.2
@@ -24,7 +28,6 @@ dependencies:
   screenshot: ^1.2.3
   share: ^2.0.4
   shared_preferences: ^2.0.11
-  smartlook: ^2.0.1
   soundpool: ^2.1.0
   rive: ^0.7.33
   url_launcher: ^6.0.17

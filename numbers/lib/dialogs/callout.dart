@@ -90,7 +90,7 @@ class _CalloutState extends AbstractDialogState<Callout> {
                               height: 40.d,
                               child: BumpedButton(
                                   cornerRadius: 8.d,
-                                  isEnable: Ads.isReady(),
+                                  isEnable: Ads.isReady,
                                   colors: TColors.orange.value,
                                   errorMessage: Toast("ads_unavailable".l(),
                                       monoIcon: "0"),

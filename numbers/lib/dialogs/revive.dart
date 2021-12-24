@@ -72,7 +72,7 @@ class _ReviveDialogState extends AbstractDialogState<ReviveDialog> {
             right: 4.d,
             cornerRadius: 16.d,
             errorMessage: Toast("ads_unavailable".l(), monoIcon: "A"),
-            isEnable: widget.numRevive < 2 && Ads.isReady(),
+            isEnable: widget.numRevive < 2 && Ads.isReady,
             onTap: () => buttonsClick(context, "revive", 0, true),
             colors: TColors.orange.value,
             content: Stack(alignment: Alignment.centerLeft, children: [

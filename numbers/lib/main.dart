@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:numbers/dialogs/quit.dart';
-
+import 'package:numbers/dialogs/start.dart';
+import 'package:numbers/utils/ads.dart';
+// import 'package:numbers/utils/ads.dart';
 import 'package:numbers/utils/localization.dart';
 import 'package:numbers/utils/notification.dart';
 import 'package:numbers/utils/prefs.dart';
 import 'package:numbers/utils/sounds.dart';
 import 'package:numbers/utils/themes.dart';
 import 'package:numbers/utils/utils.dart';
-
-import 'dialogs/start.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,7 +51,7 @@ class MainPage extends StatefulWidget {
   _MainPageState createState() => _MainPageState();
 }
 
-class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
+class _MainPageState extends State<MainPage> {
   int _loadingState = 0;
   @override
   Widget build(BuildContext context) {
@@ -90,9 +90,9 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     Prefs.init(() async {
       await Localization.init();
       Notifier.init();
+      Ads.init();
       _loadingState = 2;
       setState(() {});
     });
-    WidgetsBinding.instance!.addObserver(this);
   }
 }
