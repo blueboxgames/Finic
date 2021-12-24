@@ -21,7 +21,6 @@ dependencies:
   flame: ^1.0.0
   flame_svg: ^1.0.0
   flutter_local_notifications: ^9.1.5
-  flutter_rating_bar: ^4.0.0
   flutter_svg: ^0.22.0
   intl: ^0.17.0
   path_provider: ^2.0.8
