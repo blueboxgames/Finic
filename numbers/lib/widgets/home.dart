@@ -155,10 +155,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       child: _button(
                           theme, 20.d, "piggy", () => _boost("piggy"),
                           // width: 96.d,
-                          badge: _slider(
-                              theme,
-                              _rewardLineAnimation!.value.round(),
-                              PiggyDialog.capacity),
+                          badge: Positioned(
+                              height: 32.d,
+                              bottom: 0,
+                              left: 0,
+                              right: 6.d,
+                              child: Components.slider(
+                                  theme,
+                                  0,
+                                  _rewardLineAnimation!.value.round(),
+                                  PiggyDialog.capacity,
+                                  icon: SVG.show("coin", 32.d))),
                           colors: Pref.coinPiggy.value >= PiggyDialog.capacity
                               ? TColors.orange.value
                               : null))
@@ -219,7 +226,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   alignment: Alignment.center,
                   padding: EdgeInsets.symmetric(horizontal: 12.d),
                   child: Text("freecoins_catch".l()),
-                  decoration: _badgeDecoration(color: Colors.white)),
+                  decoration: Components.badgeDecoration(color: Colors.white)),
             ]))); */
   }
 
@@ -255,47 +262,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             padding: EdgeInsets.symmetric(horizontal: 8.d),
             child: Text(value == 0 ? "free_l".l() : "$value",
                 style: theme.textTheme.headline6),
-            decoration: _badgeDecoration()));
-  }
-
-  Widget _slider(ThemeData theme, int value, int maxValue) {
-    var label = value >= maxValue ? "collect_l".l() : "$value / $maxValue";
-    return Positioned(
-        height: 32.d,
-        bottom: 0,
-        left: 0,
-        right: 6.d,
-        child: Stack(alignment: Alignment.centerLeft, children: [
-          Positioned(
-              height: 20.d,
-              left: 26.d,
-              right: 0,
-              child: Container(
-                  child: ClipRRect(
-                      borderRadius: BorderRadius.only(
-                          topRight: Radius.circular(12.d),
-                          bottomRight: Radius.circular(12.d)),
-                      child: LinearProgressIndicator(value: value / maxValue)),
-                  decoration: _badgeDecoration())),
-          SVG.show("coin", 32.d),
-          Positioned(
-              left: 32.d,
-              right: 4.d,
-              child: Text(label,
-                  style: TextStyle(fontSize: 10.d),
-                  textAlign: TextAlign.center)),
-        ]));
-  }
-
-  Decoration _badgeDecoration({double? cornerRadius, Color? color}) {
-    return BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-              blurRadius: 3.d, color: Colors.black, offset: Offset(0.5.d, 1.d))
-        ],
-        color: color ?? Colors.pink[700],
-        shape: BoxShape.rectangle,
-        borderRadius: BorderRadius.all(Radius.circular(cornerRadius ?? 12.d)));
+            decoration: Components.badgeDecoration()));
   }
 
   void _onGameEventHandler(GameEvent event, int value) async {

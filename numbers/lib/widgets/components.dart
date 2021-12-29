@@ -111,4 +111,43 @@ class Components {
     path.close();
     return path;
   }
+
+  static slider(ThemeData theme, int min, int value, int max, {Widget? icon}) {
+    var label = "$value / $max";
+    var hasIcon = icon != null;
+    var round = Radius.circular(12.d);
+    return Stack(alignment: Alignment.centerLeft, children: [
+      Positioned(
+          left: hasIcon ? 26.d : 0,
+          right: 0,
+          bottom: 6.d,
+          top: 6.d,
+          child: Container(
+              child: ClipRRect(
+                  borderRadius: BorderRadius.only(
+                      topRight: round,
+                      bottomRight: round,
+                      bottomLeft: hasIcon ? Radius.zero : round,
+                      topLeft: hasIcon ? Radius.zero : round),
+                  child: LinearProgressIndicator(value: value / max)),
+              decoration: badgeDecoration())),
+      icon ?? SizedBox(),
+      Positioned(
+          left: hasIcon ? 32.d : 4.d,
+          right: 4.d,
+          child: Text(label,
+              style: theme.textTheme.subtitle2, textAlign: TextAlign.center))
+    ]);
+  }
+
+  static Decoration badgeDecoration({double? cornerRadius, Color? color}) {
+    return BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+              blurRadius: 3.d, color: Colors.black, offset: Offset(0.5.d, 1.d))
+        ],
+        color: color ?? Colors.pink[700],
+        shape: BoxShape.rectangle,
+        borderRadius: BorderRadius.all(Radius.circular(cornerRadius ?? 12.d)));
+  }
 }

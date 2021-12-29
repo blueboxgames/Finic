@@ -9,6 +9,7 @@ import 'package:numbers/utils/sounds.dart';
 import 'package:numbers/utils/themes.dart';
 import 'package:numbers/utils/utils.dart';
 import 'package:numbers/widgets/buttons.dart';
+import 'package:numbers/widgets/components.dart';
 import 'package:numbers/widgets/punchbutton.dart';
 
 import 'dialogs.dart';
@@ -16,7 +17,7 @@ import 'toast.dart';
 
 // ignore: must_be_immutable
 class PiggyDialog extends AbstractDialog {
-  static final capacity = 30;
+  static int capacity = 30;
   bool? playApplaud;
   PiggyDialog({this.playApplaud})
       : super(DialogMode.piggy,
@@ -115,41 +116,11 @@ class _PiggyDialogState extends AbstractDialogState<PiggyDialog> {
                 ])),
           ]));
     }
-    var label = "$value / $maxValue";
     return Positioned(
         height: 32.d,
         bottom: 12.d,
         width: 200.d,
-        child: Stack(alignment: Alignment.centerLeft, children: [
-          Positioned(
-              height: 20.d,
-              left: 26.d,
-              right: 0,
-              child: Container(
-                  child: ClipRRect(
-                      borderRadius: BorderRadius.only(
-                          topRight: Radius.circular(12.d),
-                          bottomRight: Radius.circular(12.d)),
-                      child: LinearProgressIndicator(value: value / maxValue)),
-                  decoration: _badgeDecoration())),
-          SVG.show("coin", 32.d),
-          Positioned(
-              left: 32.d,
-              right: 4.d,
-              child: Text(label,
-                  style: TextStyle(fontSize: 12.d, color: Colors.black),
-                  textAlign: TextAlign.center)),
-        ]));
-  }
-
-  Decoration _badgeDecoration({double? cornerRadius}) {
-    return BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-              blurRadius: 3.d, color: Colors.black, offset: Offset(0.5.d, 1.d))
-        ],
-        color: Colors.pink[700],
-        shape: BoxShape.rectangle,
-        borderRadius: BorderRadius.all(Radius.circular(cornerRadius ?? 12.d)));
+        child: Components.slider(theme, maxValue, value, maxValue,
+            icon: SVG.show("coin", 32.d)));
   }
 }

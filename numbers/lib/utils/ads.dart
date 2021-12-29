@@ -83,7 +83,7 @@ enum AdPlace { Rewarded, Interstitial, InterstitialVideo, Banner }
 extension AdPlaceExt on AdPlace {
   int get threshold {
     if (this == AdPlace.InterstitialVideo) return 4;
-    if (this == AdPlace.Banner) return 10;
+    if (this == AdPlace.Banner) return 7;
     return 0;
   }
 }
