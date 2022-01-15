@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:numbers/core/cell.dart';
+import 'package:numbers/dialogs/dialogs.dart';
+import 'package:numbers/dialogs/shop.dart';
 import 'package:numbers/dialogs/toast.dart';
 import 'package:numbers/utils/ads.dart';
 import 'package:numbers/utils/localization.dart';
@@ -15,9 +17,6 @@ import 'package:numbers/widgets/punchbutton.dart';
 import 'package:numbers/widgets/widgets.dart';
 import 'package:rive/rive.dart';
 
-import 'dialogs.dart';
-
-// ignore: must_be_immutable
 class BigBlockDialog extends AbstractDialog {
   final ConfettiController confettiController;
 
@@ -34,16 +33,18 @@ class BigBlockDialog extends AbstractDialog {
 
 class _BigBlockDialogState extends AbstractDialogState<BigBlockDialog> {
   @override
-  Widget build(BuildContext context) {
-    var reward = (widget.value - 8) * 10;
-    var theme = Theme.of(context);
+  void initState() {
+    reward = (widget.value - 8) * Price.big;
     Timer(Duration(milliseconds: 500), () {
       widget.confettiController.play();
       Sound.play("win");
     });
-    widget.onWillPop = () => buttonsClick(context, "big", reward, false);
+    super.initState();
+  }
 
-    widget.child = Stack(alignment: Alignment.topCenter, children: [
+  @override
+  Widget contentFactory(ThemeData theme) {
+    return Stack(alignment: Alignment.topCenter, children: [
       Positioned(
           top: 140.d,
           child: Text("big_message".l([Cell.getScore(widget.value).toString()]),
@@ -111,6 +112,5 @@ class _BigBlockDialogState extends AbstractDialogState<BigBlockDialog> {
               turns: AlwaysStoppedAnimation(-0.02),
               child: Widgets.cell(theme, widget.value)))
     ]);
-    return super.build(context);
   }
 }

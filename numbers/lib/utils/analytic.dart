@@ -1,9 +1,11 @@
 import 'dart:async';
+
 class Analytics {
+  static late int variant = 1;
   static init() {}
 
   static void updateVariantIDs() async {}
-
+  
   static Future<void> purchase(String currency, double amount, String itemId,
       String itemType, String receipt, String signature) async {}
 

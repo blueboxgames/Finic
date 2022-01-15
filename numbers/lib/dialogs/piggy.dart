@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:numbers/dialogs/dialogs.dart';
+import 'package:numbers/dialogs/shop.dart';
+import 'package:numbers/dialogs/toast.dart';
 import 'package:numbers/utils/ads.dart';
 import 'package:numbers/utils/analytic.dart';
 import 'package:numbers/utils/localization.dart';
@@ -12,13 +15,8 @@ import 'package:numbers/widgets/buttons.dart';
 import 'package:numbers/widgets/components.dart';
 import 'package:numbers/widgets/punchbutton.dart';
 
-import 'dialogs.dart';
-import 'toast.dart';
-
-// ignore: must_be_immutable
 class PiggyDialog extends AbstractDialog {
-  static int capacity = 30;
-  bool? playApplaud;
+  final bool? playApplaud;
   PiggyDialog({this.playApplaud})
       : super(DialogMode.piggy,
             showCloseButton: false,
@@ -32,34 +30,29 @@ class PiggyDialog extends AbstractDialog {
 class _PiggyDialogState extends AbstractDialogState<PiggyDialog> {
   @override
   void initState() {
-    super.initState();
-    Analytics.updateVariantIDs();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    var theme = Theme.of(context);
-    var filled = Pref.coinPiggy.value >= PiggyDialog.capacity;
+    reward = Pref.coinPiggy.value >= Price.piggy ? Price.piggy : 0;
 
     if (widget.playApplaud ?? false)
       Timer(Duration(milliseconds: 600), () => Sound.play("win"));
-    widget.onWillPop = () => buttonsClick(
-        context, "piggy", filled ? PiggyDialog.capacity : 0, false);
+    Analytics.updateVariantIDs();
+    super.initState();
+  }
 
-    widget.child = Stack(alignment: Alignment.topCenter, children: [
+  @override
+  Widget contentFactory(ThemeData theme) {
+    return Stack(alignment: Alignment.topCenter, children: [
       SVG.show("piggy", 144.d),
       Positioned(
           top: 112.d,
           width: 260.d,
           child: Text(
-              "piggy_${filled ? 'collect' : 'fill'}"
-                  .l([(PiggyDialog.capacity * Ads.rewardCoef).toString()]),
+              "piggy_${reward > 0 ? 'collect' : 'fill'}"
+                  .l([(Price.piggy * Ads.rewardCoef).toString()]),
               textAlign: TextAlign.center,
               style: theme.textTheme.caption)),
-      _rightButton(theme, Pref.coinPiggy.value, PiggyDialog.capacity),
-      _leftButton(theme, Pref.coinPiggy.value, PiggyDialog.capacity)
+      _rightButton(theme, Pref.coinPiggy.value, Price.piggy),
+      _leftButton(theme, Pref.coinPiggy.value, Price.piggy)
     ]);
-    return super.build(context);
   }
 
   _leftButton(ThemeData theme, int value, int maxValue) {

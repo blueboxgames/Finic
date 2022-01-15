@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
-import 'package:numbers/utils/analytic.dart';
 import 'package:numbers/utils/prefs.dart';
 import 'package:numbers/utils/utils.dart';
 import 'package:numbers/widgets/buttons.dart';
@@ -37,37 +36,6 @@ class Components {
                 padding: EdgeInsets.fromLTRB(8, 4, 8, 10),
                 content: GestureDetector(
                     onTap: onTap, child: SVG.show("profile", 48.d)))));
-  }
-
-  static Widget coins(BuildContext context, String source,
-      {Function()? onTap, bool clickable = false}) {
-    if (Pref.tutorMode.value == 0) return SizedBox();
-    var theme = Theme.of(context);
-    var text = "${Pref.coin.value.format()}";
-    return Hero(
-        tag: "coin",
-        child: BumpedButton(
-            content: Row(children: [
-              SVG.show("coin", 32.d),
-              Expanded(
-                  child: Text(text,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyText2!
-                          .copyWith(fontSize: text.length > 5 ? 17.d : 22.d))),
-              clickable
-                  ? Text("+  ",
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.button)
-                  : SizedBox()
-            ]),
-            onTap: () {
-              if (clickable) {
-                Analytics.design('guiClick:shop:$source');
-                if (onTap != null) onTap();
-                // else
-                //   Rout.push(context, ShopOverlay());
-              }
-            }));
   }
 
   static Widget confetty(ConfettiController controller) {

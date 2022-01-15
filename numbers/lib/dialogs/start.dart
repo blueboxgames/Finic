@@ -1,20 +1,23 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:numbers/core/cell.dart';
 import 'package:numbers/core/game.dart';
+import 'package:numbers/dialogs/daily.dart';
+import 'package:numbers/dialogs/dialogs.dart';
+import 'package:numbers/dialogs/quests.dart';
+import 'package:numbers/dialogs/shop.dart';
 import 'package:numbers/dialogs/toast.dart';
+import 'package:numbers/notifications/questnotify.dart';
 import 'package:numbers/utils/ads.dart';
 import 'package:numbers/utils/localization.dart';
 import 'package:numbers/utils/prefs.dart';
 import 'package:numbers/utils/themes.dart';
 import 'package:numbers/utils/utils.dart';
 import 'package:numbers/widgets/buttons.dart';
+import 'package:numbers/widgets/coins.dart';
 import 'package:numbers/widgets/home.dart';
+import 'package:numbers/widgets/punchbutton.dart';
 
-import 'dialogs.dart';
-
-// ignore: must_be_immutable
 class StartDialog extends AbstractDialog {
   StartDialog()
       : super(DialogMode.start,
@@ -32,8 +35,22 @@ class _StartDialogState extends AbstractDialogState<StartDialog> {
   @override
   void initState() {
     super.initState();
+    Quests.onQuestComplete = _onQuestUpdate;
+    if (!Prefs.getString("cells").isNotEmpty)
+      _startButtonLabel = "continue_l".l();
     if (Pref.tutorMode.value == 0)
       Timer(const Duration(milliseconds: 100), _startGame);
+  }
+
+  @override
+  Widget headerFactory(ThemeData theme, double width) {
+    return Container(
+        width: width - 36.d,
+        height: 150.d,
+        padding: EdgeInsets.only(bottom: 12.d),
+        child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [Text(widget.title!, style: theme.textTheme.headline4)]));
   }
 
   @override
@@ -41,13 +58,20 @@ class _StartDialogState extends AbstractDialogState<StartDialog> {
     if (Pref.tutorMode.value == 0) return SizedBox();
     var theme = Theme.of(context);
     stepChildren.clear();
+      stepChildren.add(_questButton(theme));
+      stepChildren.add(_dailyButton(theme));
     stepChildren.add(bannerAdsFactory("start"));
-    widget.child =
-        Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+    return super.build(context);
+  }
+
+  @override
+  Widget contentFactory(ThemeData theme) {
+    var startMode = Prefs.getString("cells").isEmpty;
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Expanded(
           child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        _boostButton("start_big".l(), "512"),
-        SizedBox(width: 2.d),
+        if (startMode) _boostButton("start_big".l(), "512"),
+        if (startMode) SizedBox(width: 2.d),
         _boostButton("start_next".l(), "next")
       ])),
       SizedBox(height: 8.d),
@@ -55,7 +79,7 @@ class _StartDialogState extends AbstractDialogState<StartDialog> {
           height: 80.d,
           child: BumpedButton(
               colors: TColors.blue.value,
-              isEnable: _startButtonLabel == "start_l".l(),
+              isEnable: _startButtonLabel != "wait_l".l(),
               onTap: _onStart,
               cornerRadius: 16.d,
               content:
@@ -67,7 +91,6 @@ class _StartDialogState extends AbstractDialogState<StartDialog> {
                     textAlign: TextAlign.center)
               ])))
     ]);
-    return super.build(context);
   }
 
   Widget _boostButton(String title, String boost) {
@@ -97,11 +120,11 @@ class _StartDialogState extends AbstractDialogState<StartDialog> {
                       content: Row(children: [
                         SVG.show("coin", 24.d),
                         Expanded(
-                            child: Text("100",
+                            child: Text("${Price.boost}",
                                 textAlign: TextAlign.center,
                                 style: theme.textTheme.bodyText2))
                       ]),
-                      onTap: () => _onBoostTap(boost, 100))),
+                      onTap: () => _onBoostTap(boost, Price.boost))),
               SizedBox(height: 4.d),
               SizedBox(
                   width: 92.d,
@@ -129,7 +152,7 @@ class _StartDialogState extends AbstractDialogState<StartDialog> {
         Rout.push(context, Toast("coin_notenough".l(), icon: "coin"));
         return;
       }
-      Pref.coin.increase(-cost, itemType: "start", itemId: boost);
+      await Coins.change(-cost, "start", boost);
       _updateBoosts(boost);
       _onUpdate();
     } else {
@@ -141,6 +164,7 @@ class _StartDialogState extends AbstractDialogState<StartDialog> {
       Ads.showRewarded();
     }
   }
+
 
   _updateBoosts(String type) {
     if (type == "next") MyGame.boostNextMode = 1;
@@ -163,14 +187,77 @@ class _StartDialogState extends AbstractDialogState<StartDialog> {
     _startGame();
   }
 
-  _onUpdate() => setState(() {});
-
   _startGame() async {
-    await Rout.push(context, HomePage());
-    Cell.maxRandomValue = 4;
+    var result = await Rout.push(context, HomePage());
     MyGame.boostNextMode = 0;
     MyGame.boostBig = false;
     _startButtonLabel = "start_l".l();
     _onUpdate();
+    if (result != null) {
+      await Future.delayed(Duration(milliseconds: 100));
+      await Coins.change(result[1], "game", result[0]);
+    }
+  }
+
+
+  _onUpdate() => setState(() {});
+
+  Widget _questButton(ThemeData theme) {
+    var completed = Quests.hasCompleted;
+    var button = PunchButton(
+        top: 110.d,
+        left: 24.d,
+        width: 110.d,
+        height: 110.d,
+        colors: (completed ? TColors.orange : TColors.whiteFlat).value,
+        content: Column(children: [
+          SVG.show("quests", 72.d),
+          Text("quests_l".l(), style: theme.textTheme.subtitle2)
+        ]),
+        onTap: () async {
+          await Rout.push(context, QuestsDialog());
+          _onUpdate();
+        });
+    button.isPlaying = completed;
+    return button;
+  }
+
+  Widget _dailyButton(ThemeData theme) {
+    var available = Days.collectable;
+    var button = PunchButton(
+        top: 110.d,
+        right: 24.d,
+        width: 110.d,
+        height: 110.d,
+        padding: EdgeInsets.fromLTRB(2.d, 6.d, 0.d, 12.d),
+        colors: (available ? TColors.orange : TColors.whiteFlat).value,
+        content: Column(children: [
+          SVG.show("calendar", 72.d),
+          Text("daily_l".l(), style: theme.textTheme.subtitle2)
+        ]),
+        onTap: () async {
+          await Rout.push(context, DailyDialog());
+          _onUpdate();
+        });
+    button.isPlaying = available;
+    return button;
+  }
+
+  void _onQuestUpdate(Quest quest) {
+    _onUpdate();
+    final theme = Theme.of(context);
+    final notification = QuestNotification(quest, 48.d);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: notification,
+        backgroundColor: theme.cardColor,
+        duration: const Duration(milliseconds: 1400),
+        behavior: SnackBarBehavior.floating,
+        padding: EdgeInsets.symmetric(horizontal: 6.d, vertical: 14.d),
+        margin: EdgeInsets.only(
+            right: 12.d,
+            left: 12.d,
+            bottom: Device.size.height - 62 - notification.size),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.d))));
   }
 }

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:numbers/dialogs/daily.dart';
+import 'package:numbers/dialogs/quests.dart';
 import 'package:numbers/dialogs/quit.dart';
 import 'package:numbers/dialogs/start.dart';
 import 'package:numbers/utils/ads.dart';
-// import 'package:numbers/utils/ads.dart';
+import 'package:numbers/utils/analytic.dart';
 import 'package:numbers/utils/localization.dart';
 import 'package:numbers/utils/notification.dart';
 import 'package:numbers/utils/prefs.dart';
@@ -88,7 +90,10 @@ class _MainPageState extends State<MainPage> {
 
     Sound.init();
     Prefs.init(() async {
+      Analytics.init();
       await Localization.init();
+      Days.init();
+      Quests.init();
       Notifier.init();
       Ads.init();
       _loadingState = 2;

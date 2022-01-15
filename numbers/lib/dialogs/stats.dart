@@ -1,20 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:numbers/core/cell.dart';
+import 'package:numbers/dialogs/dialogs.dart';
 import 'package:numbers/utils/analytic.dart';
 import 'package:numbers/utils/localization.dart';
 import 'package:numbers/utils/prefs.dart';
 import 'package:numbers/utils/themes.dart';
 import 'package:numbers/utils/utils.dart';
 import 'package:numbers/widgets/buttons.dart';
-import 'package:numbers/widgets/components.dart';
+import 'package:numbers/widgets/coins.dart';
 import 'package:numbers/widgets/widgets.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share/share.dart';
 
-import 'dialogs.dart';
-
-// ignore: must_be_immutable
 class StatsDialog extends AbstractDialog {
   StatsDialog()
       : super(
@@ -32,12 +30,18 @@ class _StatsDialogState extends AbstractDialogState<StatsDialog> {
   var shareMode = false;
   @override
   Widget build(BuildContext context) {
-    var theme = Theme.of(context);
     stepChildren.clear();
     stepChildren.add(bannerAdsFactory("stats"));
-    widget.coinButton = Positioned(
-        top: 32.d, left: 12.d, child: Components.coins(context, "stats"));
-    widget.child = Screenshot(
+    return super.build(context);
+  }
+
+  @override
+  Widget coinsButtonFactory(ThemeData theme) =>
+      Coins(widget.mode.name, left: 12.d);
+
+  @override
+  Widget contentFactory(ThemeData theme) {
+    return Screenshot(
         controller: _screenshotController,
         child:
             Column(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
@@ -77,7 +81,6 @@ class _StatsDialogState extends AbstractDialogState<StatsDialog> {
                         Text("share_l".l(), style: theme.textTheme.headline5)
                       ]))
         ]));
-    return super.build(context);
   }
 
   Widget _bigRecordItem(ThemeData theme, int i) {
