@@ -191,7 +191,8 @@ class _StartDialogState extends AbstractDialogState<StartDialog> {
     var result = await Rout.push(context, HomePage());
     MyGame.boostNextMode = 0;
     MyGame.boostBig = false;
-    _startButtonLabel = "start_l".l();
+    _startButtonLabel =
+        (Prefs.getString("cells").isEmpty ? "start_l" : "continue_l").l();
     _onUpdate();
     if (result != null) {
       await Future.delayed(Duration(milliseconds: 100));
