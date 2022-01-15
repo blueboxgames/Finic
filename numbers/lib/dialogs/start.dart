@@ -36,7 +36,7 @@ class _StartDialogState extends AbstractDialogState<StartDialog> {
   void initState() {
     super.initState();
     Quests.onQuestComplete = _onQuestUpdate;
-    if (!Prefs.getString("cells").isNotEmpty)
+    if (Prefs.getString("cells").isNotEmpty)
       _startButtonLabel = "continue_l".l();
     if (Pref.tutorMode.value == 0)
       Timer(const Duration(milliseconds: 100), _startGame);
