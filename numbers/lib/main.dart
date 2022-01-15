@@ -90,8 +90,8 @@ class _MainPageState extends State<MainPage> {
 
     Sound.init();
     Prefs.init(() async {
-      Analytics.init();
       await Localization.init();
+      Analytics.init();
       Days.init();
       Quests.init();
       Notifier.init();

@@ -11,9 +11,14 @@ extension Localization on String {
 
   static Future<void> init() async {
     dir = isRTL ? TextDirection.rtl : TextDirection.ltr;
-    var data = await rootBundle.loadString('texts/locale.json');
-    var _result = json.decode(data);
     _sentences = Map();
+    await _getData('keys.json');
+    await _getData('locale.json');
+  }
+
+  static _getData(String file) async {
+    var data = await rootBundle.loadString('texts/$file');
+    var _result = json.decode(data);
     _result.forEach((String key, dynamic value) {
       _sentences![key] = value.toString();
     });
